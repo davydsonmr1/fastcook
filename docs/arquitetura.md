@@ -28,7 +28,8 @@ sequenceDiagram
     %% Passo 3: Segurança no Backend
     activate Backend
     Backend->>Backend: 🛡️ Rate Limiting (Previne DDoS/Abuso)
-    Backend->>Backend: 🛡️ Prompt Shield (Sanitiza injeções no LLM)
+    Backend->>Backend: 🛡️ Validação Zod (Bloqueia injeções '<>' '[]' '{}')
+    Backend->>Backend: 🛡️ Prompt Shield (Sanitiza instruções ao LLM)
     
     %% Passo 4: Verificação de Cache
     Backend->>Supabase: Verifica recipes_cache (hash da query)

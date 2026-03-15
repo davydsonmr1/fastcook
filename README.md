@@ -30,7 +30,9 @@ A Inteligência Artificial interpreta os seus ingredientes e o nosso Backend pro
 - ⚡ **Streaming IA**: Interface reativa em tempo real. Sem barras de "loading" infinitas.
 - 🛡️ **Segurança by Design**:
   - *Row Level Security (RLS)* no Supabase: Cada utilizador isolado.
-  - *Prompt Shield* no Fastify: Prevenção contra Jailbreaks de LLM.
+  - *Validação Extrema (Zod)*: Rejeição imediata via Regex de carateres perigosos (`{}`, `<>`, `[]`).
+  - *Prompt Shield* no Fastify: System Prompt estrito previne Jailbreaks do LLM. Modo *Kill-Switch*.
+  - *Rate Limiting*: 5 requests/hora com Degradação Graciosa informando os utilizadores em vez de Crash.
   - *Cache Inteligente*: Redução drástica de gastos de tokens e latência, protegida por *TTL (Time to Live)* e *Hashing*.
 
 ---

@@ -4,6 +4,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import sensible from '@fastify/sensible';
 import { env } from './config/env.js';
+import { recipeRoutes } from './routes/recipe.routes.js';
 
 async function buildServer() {
   const app = Fastify({
@@ -27,16 +28,26 @@ async function buildServer() {
   });
 
   await app.register(rateLimit, {
-    max: 100,
-    timeWindow: '1 minute',
+    max: 5,
+    timeWindow: '1 hour',
+    errorResponseBuilder: function () {
+      return {
+        statusCode: 429,
+        error: "Too Many Requests",
+        message: "Atingiu o limite de receitas rápidas (IA Premium). Por favor, aguarde uma hora ou tente mais tarde com o nosso futuro modelo gratuito.",
+      };
+    },
   });
 
   await app.register(sensible);
 
   // ── Health Check ────────────────────────────────────────────
-  app.get('/health', async () => {
-    return { status: 'ok', timestamp: new Date().toISOString() };
+  app.get('/health', () => {
+    return Promise.resolve({ status: 'ok', timestamp: new Date().toISOString() });
   });
+
+  // ── API Routes ──────────────────────────────────────────────
+  await app.register(recipeRoutes, { prefix: '/api/v1' });
 
   return app;
 }
@@ -46,11 +57,11 @@ async function start() {
 
   try {
     await app.listen({ port: env.PORT, host: env.HOST });
-    app.log.info(`🚀 FlashCook API running on http://${env.HOST}:${env.PORT}`);
+    app.log.info(`🚀 FlashCook API running on http://${env.HOST}:${env.PORT.toString()}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);
   }
 }
 
-start();
+void start();

@@ -1,10 +1,14 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { recipeBodySchema } from '../schemas/recipe.schema.js';
 import { generateRecipe } from '../services/groq.service.js';
+import { optionalAuth } from '../middlewares/auth.middleware.js';
+import { saveRecipeToHistory } from '../services/supabase.service.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
-  app.post('/recipes', async (request, reply) => {
+  app.decorateRequest('userId', undefined);
+
+  app.post('/recipes', { preHandler: [optionalAuth] }, async (request, reply) => {
     try {
       // 1. Validação Extrema (Zod)
       // Bloqueia tentativas primárias de injeção ou over-sizing
@@ -45,7 +49,12 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
         });
       }
 
-      // 4. Sucesso: retorna a receita processada
+      // 4. Persistir no histórico se o utilizador estiver autenticado (fire-and-forget)
+      if (request.userId) {
+        void saveRecipeToHistory(request.userId, ingredients, recipePayload);
+      }
+
+      // 5. Sucesso: retorna a receita processada
       return await reply.status(200).send(recipePayload);
 
     } catch (error) {

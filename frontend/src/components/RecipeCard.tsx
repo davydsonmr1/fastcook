@@ -1,9 +1,9 @@
-import { Clock, ChefHat, Flame, X } from 'lucide-react';
+import { Clock, ChefHat, Flame, X, Share2 } from 'lucide-react';
 import type { RecipeResponse } from '../services/api';
 
 interface RecipeCardProps {
   recipe: RecipeResponse;
-  onClear: () => void;
+  onClear?: () => void;
 }
 
 const difficultyConfig: Record<number, { label: string; color: string; stars: number }> = {
@@ -28,6 +28,30 @@ function DifficultyStars({ level }: { level: number }) {
   );
 }
 
+function shareOnWhatsApp(recipe: RecipeResponse) {
+  const diff = difficultyConfig[recipe.difficulty]?.label ?? 'Médio';
+  const stepsText = recipe.steps.map((s, i) => `${String(i + 1)}. ${s}`).join('\n');
+
+  const text = [
+    `🍳 *Receita FlashCook*`,
+    ``,
+    `📌 *${recipe.name}*`,
+    `⏱ Tempo: ${recipe.prepTime}`,
+    `🔥 Dificuldade: ${diff} (${String(recipe.difficulty)}/5)`,
+    ``,
+    `*Modo de Preparação:*`,
+    stepsText,
+    ``,
+    `_Gerado por FlashCook — receitas por voz com IA_ 🚀`,
+  ].join('\n');
+
+  window.open(
+    `https://wa.me/?text=${encodeURIComponent(text)}`,
+    '_blank',
+    'noopener,noreferrer',
+  );
+}
+
 export function RecipeCard({ recipe, onClear }: RecipeCardProps) {
   const difficulty = difficultyConfig[recipe.difficulty] ?? difficultyConfig[3];
 
@@ -41,13 +65,15 @@ export function RecipeCard({ recipe, onClear }: RecipeCardProps) {
           </div>
           <h2 className="text-xl font-bold text-white leading-snug">{recipe.name}</h2>
         </div>
-        <button
-          onClick={onClear}
-          className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 text-white transition-colors"
-          aria-label="Fechar receita e iniciar nova"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        {onClear && (
+          <button
+            onClick={onClear}
+            className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 text-white transition-colors"
+            aria-label="Fechar receita e iniciar nova"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Badges */}
@@ -82,15 +108,27 @@ export function RecipeCard({ recipe, onClear }: RecipeCardProps) {
         </ol>
       </div>
 
-      {/* Footer: Nova Receita */}
-      <div className="border-t border-slate-100 px-6 py-4">
+      {/* Footer */}
+      <div className="border-t border-slate-100 px-6 py-4 flex gap-3">
+        {/* Partilhar no WhatsApp */}
         <button
-          onClick={onClear}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 transition-colors"
+          onClick={() => shareOnWhatsApp(recipe)}
+          className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors ${onClear ? 'flex-1' : 'w-full'}`}
         >
-          <ChefHat className="w-4 h-4" />
-          Nova Receita
+          <Share2 className="w-4 h-4" />
+          Partilhar
         </button>
+
+        {/* Nova Receita (apenas no ecrã principal) */}
+        {onClear && (
+          <button
+            onClick={onClear}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 transition-colors"
+          >
+            <ChefHat className="w-4 h-4" />
+            Nova Receita
+          </button>
+        )}
       </div>
     </article>
   );

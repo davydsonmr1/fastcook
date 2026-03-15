@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/Groq_AI-F55036?style=for-the-badge&logo=groq&logoColor=white" alt="Groq" />
   <img src="https://img.shields.io/badge/Security-DevSecOps-4a154b?style=for-the-badge" alt="Security" />
   <img src="https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA Ready" />
+  <img src="https://img.shields.io/badge/Google_Auth-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Auth" />
 </p>
 
 ---
@@ -29,8 +30,9 @@ A Inteligência Artificial interpreta os seus ingredientes e o nosso Backend pro
 - 🎙️ **Voice-First Experience**: Diga o que tem. Web Speech API converte a fala sem armazenar áudio (LGPD).
 - ♻️ **Zero Waste (Desperdício Zero)**: A IA do Groq prioriza receitas que utilizam *exclusivamente* o que você ditou.
 - ⚡ **Streaming IA**: Interface reativa em tempo real. Sem barras de "loading" infinitas.
-- � **PWA Instalável & Offline**: Instale no telemóvel como uma app nativa. Receitas já consultadas ficam disponíveis sem ligação à internet graças ao Service Worker (Workbox).
-- �🛡️ **Segurança by Design**:
+- � **PWA Instalável & Offline**: Instale no telemóvel como uma app nativa. Receitas já consultadas ficam disponíveis sem ligação à internet graças ao Service Worker (Workbox).- 🔐 **Login com Google**: Autenticação via Google OAuth (Supabase Auth). Quando logado, as receitas geradas ficam guardadas no seu histórico pessoal protegido por RLS.
+- 📋 **Histórico de Receitas**: Consulte todas as suas receitas passadas. Os dados são isolados por utilizador — ninguém vê as suas receitas.
+- 📤 **Partilha no WhatsApp**: Partilhe receitas com amigos num formato limpo (texto puro, sem IDs de base de dados expostos).- �🛡️ **Segurança by Design**:
   - *Row Level Security (RLS)* no Supabase: Cada utilizador isolado.
   - *Validação Extrema (Zod)*: Rejeição imediata via Regex de carateres perigosos (`{}`, `<>`, `[]`).
   - *Prompt Shield* no Fastify: System Prompt estrito previne Jailbreaks do LLM. Modo *Kill-Switch*.
@@ -49,6 +51,8 @@ Mergulhe na engenharia por trás do FlashCook. Mantemos documentação extensiva
   Explicação detalhada das barreiras de API, RLS e Eslint Security.
 - 📲 **[PWA e Performance (Offline Cache)](./docs/pwa_e_performance.md)**
   Como o Service Worker é configurado, estratégias de cache e como testar a instalação.
+- 🔑 **[Autenticação e Controlo de Acesso (RBAC)](./docs/auth_e_rbac.md)**
+  Fluxo Google OAuth, validação JWT no Fastify middleware e como o RLS protege o histórico.
 
 > **Regra Permanente do Projeto:** Todo o novo *feature-set* introduzido **obriga** a uma atualização coesiva no código, no diagrama de sequência e nesta documentação centralizada.
 
@@ -78,7 +82,15 @@ cp .env.example .env
 ```
 
 **3. Configure a Base de Dados (Supabase SQL Editor):**
-Execute o conteúdo do nosso ficheiro de migração inicial `backend/supabase/migrations/001_initial_schema.sql` diretamente no painel SQL do seu projeto Supabase para criar as tabelas `profiles` e `recipes_cache` com RLS ativo.
+Execute os ficheiros de migração por ordem no painel SQL do seu projeto Supabase:
+1. `backend/supabase/migrations/001_initial_schema.sql` — Cria tabelas `profiles` e `recipes_cache` com RLS ativo.
+2. `backend/supabase/migrations/002_user_history.sql` — Adiciona `user_id` ao `recipes_cache` e atualiza políticas RLS para histórico.
+
+**3.1. Configure o Google OAuth (Supabase Dashboard):**
+- No dashboard Supabase, vá a **Authentication → Providers → Google**.
+- Ative o provider e cole o `Client ID` e `Client Secret` obtidos na [Google Cloud Console](https://console.cloud.google.com/).
+- Adicione `https://<project-ref>.supabase.co/auth/v1/callback` como URL de redirect autorizado no Google.
+- Consulte o guia completo em [`docs/auth_e_rbac.md`](./docs/auth_e_rbac.md).
 
 **4. Configure o Frontend:**
 ```bash

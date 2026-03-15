@@ -19,18 +19,25 @@ sequenceDiagram
         participant Supabase as Supabase (PostgreSQL)
     end
 
+    %% Passo 0: Autenticação (Opcional)
+    Utilizador->>Frontend: Clica "Entrar com Google"
+    Frontend->>Supabase: signInWithOAuth (Google Provider)
+    Supabase-->>Frontend: Redirect OAuth → JWT (access_token)
+    note over Frontend: JWT armazenado pelo Supabase SDK.<br/>Enviado como Bearer Token em todas as chamadas API.
+
     %% Passo 1: Captura
     Utilizador->>Frontend: Dita a receita ("Quero um bolo com 2 ovos e farinha")
     note over Frontend: Web Speech API (useSpeech) transcreve áudio para texto em tempo real.<br/>Áudio NÃO sai do browser (LGPD).
     
     %% Passo 2: Request Seguro (via SW)
-    Frontend->>SW: POST /api/v1/recipes (Texto Higienizado)
+    Frontend->>SW: POST /api/v1/recipes + Bearer Token (Texto Higienizado)
     note over SW: Service Worker interceta o pedido.<br/>Estratégia: NetworkFirst com fallback para cache offline.
     SW->>Backend: Reencaminha para o servidor (se online)
     
     %% Passo 3: Segurança no Backend
     activate Backend
     Backend->>Backend: 🛡️ Rate Limiting (Previne DDoS/Abuso)
+    Backend->>Backend: 🔑 Auth Middleware (Valida JWT via supabaseAdmin.auth.getUser)
     Backend->>Backend: 🛡️ Validação Zod (Bloqueia injeções '<>' '[]' '{}')
     Backend->>Backend: 🛡️ Prompt Shield (Sanitiza instruções ao LLM)
     
@@ -55,8 +62,9 @@ sequenceDiagram
         Groq-->>Backend: Resposta JSON gerada
         deactivate Groq
         
-        %% Passo 6: Guardar em Cache (Assíncrono)
-        Backend-)Supabase: Insere no recipes_cache (usando SERVICE_ROLE_KEY)
+        %% Passo 6: Guardar no Histórico (Assíncrono, se autenticado)
+        Backend-)Supabase: Insere no recipes_cache + user_id (SERVICE_ROLE_KEY)
+        note over Backend,Supabase: Fire-and-forget: se user_id presente,<br/>associa receita ao histórico do utilizador.
         
         %% Passo 7: Resposta
         Backend-->>SW: HTTP 200 (Receita gerada)
@@ -67,6 +75,13 @@ sequenceDiagram
     %% Passo 8: Renderização
     Frontend-->>Utilizador: Exibe a receita no RecipeCard (UI visual com badges e passos)
     
+    %% Passo 9: Histórico (Leitura Direta via RLS)
+    Utilizador->>Frontend: Clica "Histórico"
+    Frontend->>Supabase: SELECT recipes_cache WHERE user_id = auth.uid() (via ANON_KEY + JWT)
+    note over Frontend,Supabase: RLS garante que cada utilizador<br/>apenas vê as suas próprias receitas.
+    Supabase-->>Frontend: Lista de receitas do utilizador
+    Frontend-->>Utilizador: Exibe RecipeCards do histórico
+    
     %% Cenário Offline
     note over SW: Se offline: devolve receitas previamente cacheadas<br/>ou a App Shell estática (HTML/CSS/JS).
 ```
@@ -75,6 +90,7 @@ sequenceDiagram
 
 1. **Cliente 'Burro' (Zero Trust):** O frontend (React) nunca fala diretamente com o Groq (IA) nem tem permissões de escrita genéricas no Supabase. O Frontend apenas possui a `ANON_KEY` restrita por RLS.
 2. **Backend Protetor (Shield):** O Fastify atua como middleware de segurança. Ele impõe limites de uso (Rate Limiting) e aplica o *Prompt Shield* para garantir que utilizadores não fazem "jailbreak" ao modelo de IA.
-3. **Desempenho (Cache Inteligente):** A utilização do `recipes_cache` no Supabase economiza dramáticamente tokens da API do Groq mitigando custos, ao mesmo tempo que reduz a latência para os utilizadores finais em casos de receitas populares (ex: "Bolo de chocolate").
-4. **LGPD/RGPD by Design:** O processamento da fala ocorre no browser ou não persiste o áudio, e nenhum dado sensível dos clientes interseta o contexto do LLM.
-5. **PWA Offline (Service Worker):** O `vite-plugin-pwa` gera automaticamente um Service Worker (Workbox) que coloca em *precache* todos os ativos estáticos (App Shell) e aplica uma estratégia **NetworkFirst** para respostas da API. Isto permite que a aplicação seja **instalável** no telemóvel e continue funcional em modo offline, devolvendo receitas previamente consultadas a partir da cache local do browser. Consulte a documentação detalhada em [`docs/pwa_e_performance.md`](./pwa_e_performance.md).
+3. **Autenticação JWT (Zero Trust no Backend):** O Backend nunca confia no Frontend cegamente. O middleware `optionalAuth` valida o Bearer Token JWT via `supabaseAdmin.auth.getUser()` antes de associar receitas ao histórico de um utilizador. Sem token válido, o utilizador usa a app como anónimo (sem histórico). Consulte [`docs/auth_e_rbac.md`](./auth_e_rbac.md).
+4. **Desempenho (Cache Inteligente):** A utilização do `recipes_cache` no Supabase economiza dramáticamente tokens da API do Groq mitigando custos, ao mesmo tempo que reduz a latência para os utilizadores finais em casos de receitas populares (ex: "Bolo de chocolate").
+5. **LGPD/RGPD by Design:** O processamento da fala ocorre no browser ou não persiste o áudio, e nenhum dado sensível dos clientes interseta o contexto do LLM.
+6. **PWA Offline (Service Worker):** O `vite-plugin-pwa` gera automaticamente um Service Worker (Workbox) que coloca em *precache* todos os ativos estáticos (App Shell) e aplica uma estratégia **NetworkFirst** para respostas da API. Isto permite que a aplicação seja **instalável** no telemóvel e continue funcional em modo offline, devolvendo receitas previamente consultadas a partir da cache local do browser. Consulte a documentação detalhada em [`docs/pwa_e_performance.md`](./pwa_e_performance.md).

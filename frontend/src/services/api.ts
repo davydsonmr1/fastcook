@@ -1,3 +1,5 @@
+import { supabase } from '../lib/supabase';
+
 export interface RecipeResponse {
   name: string;
   prepTime: string;
@@ -17,17 +19,27 @@ export class ApiError extends Error {
 /**
  * Função responsável por comunicar com o backend seguro Fastify.
  * Interceta os códigos HTTP de segurança e converte para mensagens UX-friendly.
+ * Envia o Bearer Token JWT do Supabase (se autenticado) para persistir no histórico.
  */
 export async function generateRecipe(ingredients: string): Promise<RecipeResponse> {
   // Lemos a URL através das variáveis padrão do Vite
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+  // Obtém o token JWT do Supabase (se o utilizador estiver autenticado)
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+
   try {
     const response = await fetch(`${apiUrl}/api/v1/recipes`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ ingredients }),
     });
 

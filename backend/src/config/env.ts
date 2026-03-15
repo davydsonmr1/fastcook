@@ -11,9 +11,9 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
-  // Supabase
+  // Supabase — backend usa exclusivamente a service_role (contorna RLS)
+  // A ANON_KEY é uma responsabilidade do frontend (variável VITE_)
   SUPABASE_URL: z.string().url({ message: 'SUPABASE_URL é obrigatória' }),
-  SUPABASE_ANON_KEY: z.string().min(1, { message: 'SUPABASE_ANON_KEY é obrigatória' }),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, { message: 'SUPABASE_SERVICE_ROLE_KEY é obrigatória' }),
 
   // Groq AI

@@ -20,10 +20,10 @@ sequenceDiagram
 
     %% Passo 1: Captura
     Utilizador->>Frontend: Dita a receita ("Quero um bolo com 2 ovos e farinha")
-    note over Frontend: Web Speech API transcreve aúdio para texto.<br/>Áudio NÃO é gravado (LGPD).
+    note over Frontend: Web Speech API (useSpeech) transcreve áudio para texto em tempo real.<br/>Áudio NÃO sai do browser (LGPD).
     
-    %% Passo 2: Request
-    Frontend->>Backend: POST /api/v1/recipes (JWT Auth + Texto)
+    %% Passo 2: Request Seguro
+    Frontend->>Backend: POST /api/v1/recipes (Texto Higienizado)
     
     %% Passo 3: Segurança no Backend
     activate Backend
@@ -37,7 +37,10 @@ sequenceDiagram
     
     alt Encontrado no Cache (TTL Válido)
         Supabase-->>Backend: Retorna receita em JSON
-        Backend-->>Frontend: Retorna receita (imediato)
+        Backend-->>Frontend: HTTP 200 (Receita)
+    else Abuso Detetado (Shield / Rate Limit)
+        Backend-->>Frontend: HTTP 429 ou 422
+        Frontend-->>Utilizador: Alerta UX amigável ("Tente novamente" / "Input Inválido")
     else Não Encontrado (Cache Miss)
         Supabase-->>Backend: Null
         deactivate Supabase
@@ -52,12 +55,12 @@ sequenceDiagram
         Backend-)Supabase: Insere no recipes_cache (usando SERVICE_ROLE_KEY)
         
         %% Passo 7: Resposta
-        Backend-->>Frontend: Retorna receita ao utilizador
+        Backend-->>Frontend: HTTP 200 (Receita gerada)
     end
     deactivate Backend
     
     %% Passo 8: Renderização
-    Frontend-->>Utilizador: Exibe a receita na UI (Markdown/UI Component)
+    Frontend-->>Utilizador: Exibe a receita na UI ou JSON (MVP)
 ```
 
 ## Porquê esta Arquitetura?

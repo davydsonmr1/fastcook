@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
   <img src="https://img.shields.io/badge/Groq_AI-F55036?style=for-the-badge&logo=groq&logoColor=white" alt="Groq" />
   <img src="https://img.shields.io/badge/Security-DevSecOps-4a154b?style=for-the-badge" alt="Security" />
+  <img src="https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA Ready" />
 </p>
 
 ---
@@ -28,7 +29,8 @@ A Inteligência Artificial interpreta os seus ingredientes e o nosso Backend pro
 - 🎙️ **Voice-First Experience**: Diga o que tem. Web Speech API converte a fala sem armazenar áudio (LGPD).
 - ♻️ **Zero Waste (Desperdício Zero)**: A IA do Groq prioriza receitas que utilizam *exclusivamente* o que você ditou.
 - ⚡ **Streaming IA**: Interface reativa em tempo real. Sem barras de "loading" infinitas.
-- 🛡️ **Segurança by Design**:
+- � **PWA Instalável & Offline**: Instale no telemóvel como uma app nativa. Receitas já consultadas ficam disponíveis sem ligação à internet graças ao Service Worker (Workbox).
+- �🛡️ **Segurança by Design**:
   - *Row Level Security (RLS)* no Supabase: Cada utilizador isolado.
   - *Validação Extrema (Zod)*: Rejeição imediata via Regex de carateres perigosos (`{}`, `<>`, `[]`).
   - *Prompt Shield* no Fastify: System Prompt estrito previne Jailbreaks do LLM. Modo *Kill-Switch*.
@@ -45,6 +47,8 @@ Mergulhe na engenharia por trás do FlashCook. Mantemos documentação extensiva
   Dita a receita -> Fastify Shield -> Groq AI -> Cache -> UI.
 - 🔒 **[Segurança, Privacidade e LGPD/RGPD](./docs/seguranca_e_privacidade.md)**
   Explicação detalhada das barreiras de API, RLS e Eslint Security.
+- 📲 **[PWA e Performance (Offline Cache)](./docs/pwa_e_performance.md)**
+  Como o Service Worker é configurado, estratégias de cache e como testar a instalação.
 
 > **Regra Permanente do Projeto:** Todo o novo *feature-set* introduzido **obriga** a uma atualização coesiva no código, no diagrama de sequência e nesta documentação centralizada.
 
@@ -96,6 +100,20 @@ cd frontend && npm run dev
 ```
 
 Acesse via browser em `http://localhost:5173`. O servidor Fastify responderá em `http://localhost:3001`.
+
+### Testar PWA (Build de Produção)
+
+A PWA (Service Worker + Manifest) só está ativa no build de produção:
+
+```bash
+cd frontend
+npm run build
+npm run preview
+```
+
+Aceda a `http://localhost:4173`. No Chrome, abra **DevTools → Application → Service Workers** para verificar que o SW está ativo. Para instalar a app, clique no ícone ⊕ na barra de endereço ou use o menu do browser → "Instalar FlashCook".
+
+Consulte o guia completo em [`docs/pwa_e_performance.md`](./docs/pwa_e_performance.md).
 
 ---
 

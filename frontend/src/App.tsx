@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { useSpeech } from './hooks/useSpeech';
 import { generateRecipe, ApiError } from './services/api';
 import type { RecipeResponse } from './services/api';
+import { RecipeCard } from './components/RecipeCard';
 
 function App() {
-  const { isListening, transcript, error: speechError, startListening, stopListening } = useSpeech();
+  const { isListening, transcript, error: speechError, startListening, stopListening, resetTranscript } = useSpeech();
   
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<RecipeResponse | null>(null);
@@ -15,6 +16,12 @@ function App() {
 
   // Unified Error Msg based on Speech fallback or API
   const displayError = speechError || apiErrorMsg;
+
+  const handleClear = () => {
+    setResult(null);
+    setApiErrorMsg(null);
+    resetTranscript();
+  };
 
   const handleToggleListen = () => {
     // Limpa estado anterior na nova tentativa
@@ -137,16 +144,10 @@ function App() {
           </div>
         )}
 
-        {/* Result Area (Raw JSON for Task 5 MVP) */}
+        {/* Recipe Card */}
         {result && !isLoading && (
-          <div className="mt-8 w-full bg-slate-900 rounded-2xl p-4 shadow-lg overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
-               <span className="text-xs font-mono text-slate-400">Response (MVP JSON)</span>
-               <span className="text-xs bg-primary-500/20 text-primary-400 px-2 py-1 rounded text-green-400">200 OK</span>
-            </div>
-            <pre className="text-emerald-400 text-xs font-mono overflow-auto whitespace-pre-wrap">
-              {JSON.stringify(result, null, 2)}
-            </pre>
+          <div className="mt-8 w-full">
+            <RecipeCard recipe={result} onClear={handleClear} />
           </div>
         )}
 

@@ -12,6 +12,7 @@ sequenceDiagram
     
     actor Utilizador as Utilizador
     participant Frontend as React + Vite (Web)
+    participant SW as Service Worker (PWA Cache)
     participant Backend as Fastify (Node.js)
     box Cloud Segura (VPC)
         participant Groq as Groq AI (Llama 3)
@@ -22,8 +23,10 @@ sequenceDiagram
     Utilizador->>Frontend: Dita a receita ("Quero um bolo com 2 ovos e farinha")
     note over Frontend: Web Speech API (useSpeech) transcreve áudio para texto em tempo real.<br/>Áudio NÃO sai do browser (LGPD).
     
-    %% Passo 2: Request Seguro
-    Frontend->>Backend: POST /api/v1/recipes (Texto Higienizado)
+    %% Passo 2: Request Seguro (via SW)
+    Frontend->>SW: POST /api/v1/recipes (Texto Higienizado)
+    note over SW: Service Worker interceta o pedido.<br/>Estratégia: NetworkFirst com fallback para cache offline.
+    SW->>Backend: Reencaminha para o servidor (se online)
     
     %% Passo 3: Segurança no Backend
     activate Backend
@@ -37,7 +40,8 @@ sequenceDiagram
     
     alt Encontrado no Cache (TTL Válido)
         Supabase-->>Backend: Retorna receita em JSON
-        Backend-->>Frontend: HTTP 200 (Receita)
+        Backend-->>SW: HTTP 200 (Receita)
+        SW-->>Frontend: Receita (guardada em cache local para offline)
     else Abuso Detetado (Shield / Rate Limit)
         Backend-->>Frontend: HTTP 429 ou 422
         Frontend-->>Utilizador: Alerta UX amigável ("Tente novamente" / "Input Inválido")
@@ -55,12 +59,16 @@ sequenceDiagram
         Backend-)Supabase: Insere no recipes_cache (usando SERVICE_ROLE_KEY)
         
         %% Passo 7: Resposta
-        Backend-->>Frontend: HTTP 200 (Receita gerada)
+        Backend-->>SW: HTTP 200 (Receita gerada)
+        SW-->>Frontend: Receita (armazenada no cache do SW)
     end
     deactivate Backend
     
     %% Passo 8: Renderização
-    Frontend-->>Utilizador: Exibe a receita na UI ou JSON (MVP)
+    Frontend-->>Utilizador: Exibe a receita no RecipeCard (UI visual com badges e passos)
+    
+    %% Cenário Offline
+    note over SW: Se offline: devolve receitas previamente cacheadas<br/>ou a App Shell estática (HTML/CSS/JS).
 ```
 
 ## Porquê esta Arquitetura?
@@ -69,3 +77,4 @@ sequenceDiagram
 2. **Backend Protetor (Shield):** O Fastify atua como middleware de segurança. Ele impõe limites de uso (Rate Limiting) e aplica o *Prompt Shield* para garantir que utilizadores não fazem "jailbreak" ao modelo de IA.
 3. **Desempenho (Cache Inteligente):** A utilização do `recipes_cache` no Supabase economiza dramáticamente tokens da API do Groq mitigando custos, ao mesmo tempo que reduz a latência para os utilizadores finais em casos de receitas populares (ex: "Bolo de chocolate").
 4. **LGPD/RGPD by Design:** O processamento da fala ocorre no browser ou não persiste o áudio, e nenhum dado sensível dos clientes interseta o contexto do LLM.
+5. **PWA Offline (Service Worker):** O `vite-plugin-pwa` gera automaticamente um Service Worker (Workbox) que coloca em *precache* todos os ativos estáticos (App Shell) e aplica uma estratégia **NetworkFirst** para respostas da API. Isto permite que a aplicação seja **instalável** no telemóvel e continue funcional em modo offline, devolvendo receitas previamente consultadas a partir da cache local do browser. Consulte a documentação detalhada em [`docs/pwa_e_performance.md`](./pwa_e_performance.md).

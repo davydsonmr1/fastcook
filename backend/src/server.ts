@@ -30,11 +30,12 @@ async function buildServer() {
   await app.register(rateLimit, {
     max: 5,
     timeWindow: '1 hour',
+    continueExceeding: true, // Permite que a rota decida o que fazer (ex: degradação graciosa de modelo)
     errorResponseBuilder: function () {
       return {
         statusCode: 429,
         error: "Too Many Requests",
-        message: "Atingiu o limite de receitas rápidas (IA Premium). Por favor, aguarde uma hora ou tente mais tarde com o nosso futuro modelo gratuito.",
+        message: "Atingiu o limite de requisições.",
       };
     },
   });

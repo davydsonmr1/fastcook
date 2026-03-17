@@ -15,6 +15,7 @@ function App() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<RecipeResponse | null>(null);
+  const [partialRecipeText, setPartialRecipeText] = useState<string>('');
   const [apiErrorMsg, setApiErrorMsg] = useState<string | null>(null);
 
   // Redireciona para Home se o utilizador fizer logout estando no Histórico
@@ -29,6 +30,7 @@ function App() {
 
   const handleClear = () => {
     setResult(null);
+    setPartialRecipeText('');
     setApiErrorMsg(null);
     resetTranscript();
   };
@@ -37,6 +39,7 @@ function App() {
     // Limpa estado anterior na nova tentativa
     setApiErrorMsg(null);
     setResult(null);
+    setPartialRecipeText('');
 
     if (isListening) {
       // Paragem manual pelo microfone
@@ -55,11 +58,15 @@ function App() {
     setIsLoading(true);
     setApiErrorMsg(null);
     setResult(null);
+    setPartialRecipeText('');
 
     try {
-      // Chamada à nossa class wrapper `generateRecipe` que engloba UX Security (HTTP 429/422)
-      const recipePayload = await generateRecipe(ingredients);
+      // Chamada à nossa class wrapper `generateRecipe` com callback de stream incluído
+      const recipePayload = await generateRecipe(ingredients, (text) => {
+        setPartialRecipeText(text);
+      });
       setResult(recipePayload);
+      setPartialRecipeText('');
     } catch (err) {
       if (err instanceof ApiError) {
         setApiErrorMsg(err.message);
@@ -152,18 +159,24 @@ function App() {
               </div>
             )}
 
-            {/* Loading State */}
-            {isLoading && (
-              <div className="mt-8 flex flex-col items-center text-primary-500 space-y-3">
-                 <Loader2 className="w-8 h-8 animate-spin" />
-                 <p className="text-sm font-medium animate-pulse">A cozinhar a receita perfeita...</p>
-              </div>
-            )}
-
-            {/* Recipe Card */}
-            {result && !isLoading && (
+            {/* Loading / Streaming State or Final Result */}
+            {(isLoading || result) && (
               <div className="mt-8 w-full">
-                <RecipeCard recipe={result} onClear={handleClear} />
+                {(!partialRecipeText && !result && isLoading) && (
+                  <div className="flex flex-col items-center text-primary-500 space-y-3 mb-8">
+                     <Loader2 className="w-8 h-8 animate-spin" />
+                     <p className="text-sm font-medium animate-pulse">A preparar os ingredientes...</p>
+                  </div>
+                )}
+                
+                {(partialRecipeText || result) && (
+                  <RecipeCard 
+                    recipe={result ?? undefined} 
+                    partialText={partialRecipeText} 
+                    onClear={!isLoading ? handleClear : undefined} 
+                    isStreaming={isLoading}
+                  />
+                )}
               </div>
             )}
 

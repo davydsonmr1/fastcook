@@ -53,6 +53,8 @@ Mergulhe na engenharia por trás do FlashCook. Mantemos documentação extensiva
   Como o Service Worker é configurado, estratégias de cache e como testar a instalação.
 - 🔑 **[Autenticação e Controlo de Acesso (RBAC)](./docs/auth_e_rbac.md)**
   Fluxo Google OAuth, validação JWT no Fastify middleware e como o RLS protege o histórico.
+- ⚖️ **[Resiliência e Controlo de Custos](./docs/resiliencia_e_custos.md)**
+  Explicação sobre Degradação Graciosa de Modelos IA e Streaming SSE, protegendo a faturação contra abusos.
 
 > **Regra Permanente do Projeto:** Todo o novo *feature-set* introduzido **obriga** a uma atualização coesiva no código, no diagrama de sequência e nesta documentação centralizada.
 

@@ -56,19 +56,24 @@ sequenceDiagram
         Supabase-->>Backend: Null
         deactivate Supabase
         
-        %% Passo 5: LLM (com chave secreta do Backend)
-        Backend->>Groq: Envia prompt (apenas Backend tem GROQ_API_KEY)
+        %% Passo 5: LLM Stream & Degradação Graciosa
+        alt Rate Limit Normal (<5 requests)
+           Backend->>Groq: Envia prompt (modelo: llama-3.3-70b-versatile)
+        else Rate Limit Excedido (>5 requests)
+           Backend->>Groq: Envia prompt (modelo: llama3-8b-8192) - Degradação Graciosa
+        end
         activate Groq
-        Groq-->>Backend: Resposta JSON gerada
+        
+        %% Passo 6: Server-Sent Events (SSE) Streaming
+        Groq-->>Backend: Stream iterável (chunks JSON)
+        Backend-->>SW: Chunks via SSE (text/event-stream)
+        SW-->>Frontend: Recebe chunks em tempo real
+        Frontend-->>Utilizador: Efeito máquina de escrever na UI
         deactivate Groq
         
-        %% Passo 6: Guardar no Histórico (Assíncrono, se autenticado)
-        Backend-)Supabase: Insere no recipes_cache + user_id (SERVICE_ROLE_KEY)
-        note over Backend,Supabase: Fire-and-forget: se user_id presente,<br/>associa receita ao histórico do utilizador.
-        
-        %% Passo 7: Resposta
-        Backend-->>SW: HTTP 200 (Receita gerada)
-        SW-->>Frontend: Receita (armazenada no cache do SW)
+        %% Passo 7: Guardar no Histórico (No final do Stream)
+        Backend-)Supabase: Insere JSON completo no recipes_cache + user_id (SERVICE_ROLE_KEY)
+        note over Backend,Supabase: Se user_id presente,<br/>associa receita ao histórico após o evento 'done'.
     end
     deactivate Backend
     

@@ -2,8 +2,37 @@ import { Clock, ChefHat, Flame, X, Share2 } from 'lucide-react';
 import type { RecipeResponse } from '../services/api';
 
 interface RecipeCardProps {
-  recipe: RecipeResponse;
+  recipe?: RecipeResponse;
+  partialText?: string;
   onClear?: () => void;
+  isStreaming?: boolean;
+}
+
+// Utilitário para extrair campos de um JSON incompleto de forma resiliente
+function parsePartialJson(jsonString: string): Partial<RecipeResponse> {
+  if (!jsonString) return {};
+  try {
+    return JSON.parse(jsonString);
+  } catch (e) {
+    const nameMatch = jsonString.match(/"name"\s*:\s*"([^"]+)/);
+    const prepMatch = jsonString.match(/"prepTime"\s*:\s*"([^"]+)/);
+    const diffMatch = jsonString.match(/"difficulty"\s*:\s*(\d+)/);
+    
+    const steps: string[] = [];
+    const stepsBlockMatch = jsonString.match(/"steps"\s*:\s*\[(.*)/s);
+    if (stepsBlockMatch) {
+       const block = stepsBlockMatch[1];
+       const matches = [...block.matchAll(/"([^"]+)"/g)];
+       matches.forEach(m => steps.push(m[1]));
+    }
+
+    return {
+      name: nameMatch ? nameMatch[1] : 'A cozinhar...',
+      prepTime: prepMatch ? prepMatch[1] : '...',
+      difficulty: diffMatch ? parseInt(diffMatch[1], 10) : 3,
+      steps: steps.length > 0 ? steps : [],
+    };
+  }
 }
 
 const difficultyConfig: Record<number, { label: string; color: string; stars: number }> = {
@@ -52,18 +81,22 @@ function shareOnWhatsApp(recipe: RecipeResponse) {
   );
 }
 
-export function RecipeCard({ recipe, onClear }: RecipeCardProps) {
-  const difficulty = difficultyConfig[recipe.difficulty] ?? difficultyConfig[3];
+export function RecipeCard({ recipe, partialText, onClear, isStreaming }: RecipeCardProps) {
+  const displayRecipe = recipe || parsePartialJson(partialText || '');
+  const difficulty = difficultyConfig[displayRecipe.difficulty || 3] ?? difficultyConfig[3];
 
   return (
-    <article className="animate-fade-in-up w-full bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
+    <article className={`animate-fade-in-up w-full bg-white rounded-3xl shadow-lg border-2 ${isStreaming ? 'border-primary-300 shadow-primary-100/50' : 'border-slate-100'} overflow-hidden transition-all duration-500`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-5 flex items-start justify-between gap-4">
+      <div className={`px-6 py-5 flex items-start justify-between gap-4 transition-colors duration-500 ${isStreaming ? 'bg-gradient-to-r from-primary-400 to-primary-500 animate-pulse' : 'bg-gradient-to-r from-primary-500 to-primary-600'}`}>
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm">
-            <ChefHat className="w-5 h-5 text-white" />
+            <ChefHat className={`w-5 h-5 text-white ${isStreaming ? 'animate-bounce' : ''}`} />
           </div>
-          <h2 className="text-xl font-bold text-white leading-snug">{recipe.name}</h2>
+          <h2 className="text-xl font-bold text-white leading-snug">
+            {displayRecipe.name || 'A pensar na receita...'}
+            {isStreaming && <span className="ml-1 animate-pulse">|</span>}
+          </h2>
         </div>
         {onClear && (
           <button
@@ -81,25 +114,29 @@ export function RecipeCard({ recipe, onClear }: RecipeCardProps) {
         {/* Tempo de Preparo */}
         <span className="inline-flex items-center gap-1.5 text-sm font-medium bg-sky-100 text-sky-700 ring-1 ring-sky-300 rounded-full px-3 py-1">
           <Clock className="w-3.5 h-3.5" />
-          {recipe.prepTime}
+          {displayRecipe.prepTime || '...'}
         </span>
 
         {/* Dificuldade */}
         <span className={`inline-flex items-center gap-1.5 text-sm font-medium ring-1 rounded-full px-3 py-1 ${difficulty.color}`}>
-          <DifficultyStars level={recipe.difficulty} />
+          <DifficultyStars level={displayRecipe.difficulty || 3} />
           {difficulty.label}
         </span>
       </div>
 
       {/* Passos */}
       <div className="px-6 pt-3 pb-6">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
           Modo de Preparação
+          {isStreaming && <div className="w-2 h-2 rounded-full bg-primary-400 animate-ping"></div>}
         </h3>
         <ol className="space-y-3">
-          {recipe.steps.map((step, index) => (
-            <li key={index} className="flex gap-3 items-start">
-              <span className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-50 text-primary-600 text-xs font-bold">
+          {(!displayRecipe.steps || displayRecipe.steps.length === 0) && (
+             <p className="text-sm text-slate-400 italic">A aguardar passos...</p>
+          )}
+          {displayRecipe.steps?.map((step, index) => (
+            <li key={index} className="flex gap-3 items-start animate-fade-in-up">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-50 text-primary-600 text-xs font-bold transition-transform hover:scale-110">
                 {index + 1}
               </span>
               <p className="text-sm text-slate-700 leading-relaxed pt-0.5">{step}</p>
@@ -112,8 +149,9 @@ export function RecipeCard({ recipe, onClear }: RecipeCardProps) {
       <div className="border-t border-slate-100 px-6 py-4 flex gap-3">
         {/* Partilhar no WhatsApp */}
         <button
-          onClick={() => shareOnWhatsApp(recipe)}
-          className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors ${onClear ? 'flex-1' : 'w-full'}`}
+          onClick={() => displayRecipe.steps && displayRecipe.steps.length > 0 ? shareOnWhatsApp(displayRecipe as RecipeResponse) : null}
+          disabled={isStreaming}
+          className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${onClear ? 'flex-1' : 'w-full'} ${isStreaming ? 'text-slate-400 bg-slate-50 cursor-not-allowed' : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'}`}
         >
           <Share2 className="w-4 h-4" />
           Partilhar

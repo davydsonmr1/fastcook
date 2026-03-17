@@ -5,10 +5,11 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copia pacotes necessários
-COPY package*.json ./
+COPY package.json ./
 
 # Instala dependências exatas e limpas
-RUN npm ci
+RUN npm install --legacy-peer-deps
+
 
 # Copia todo o source
 COPY . .
@@ -25,8 +26,8 @@ RUN addgroup -S nodeapp && adduser -S nodeapp -G nodeapp
 WORKDIR /app
 
 # Copia dependências essenciais de produção e compilação
-COPY package*.json ./
-RUN npm ci --omit=dev
+COPY package.json ./
+RUN npm install --omit=dev --legacy-peer-deps
 
 # Copia o folder dist da fase anterior
 COPY --from=builder /app/dist ./dist

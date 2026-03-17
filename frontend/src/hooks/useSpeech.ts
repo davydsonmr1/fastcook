@@ -16,10 +16,22 @@ interface SpeechRecognitionErrorEvent {
   error: string;
 }
 
-export function useSpeech() {
+export function useSpeech(onEndCallback?: () => void) {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
+  const errorMsgRef = useRef<string | null>(null);
+  const onEndCallbackRef = useRef(onEndCallback);
+  
+  // Sincroniza o estado dos refs para as arrow functions dentro dos handlers
+  useEffect(() => {
+     errorMsgRef.current = errorMsg;
+  }, [errorMsg]);
+
+  useEffect(() => {
+     onEndCallbackRef.current = onEndCallback;
+  }, [onEndCallback]);
 
   // useRef para guardar a instância e evitar recriações sucessivas
   const recognitionRef = useRef<unknown>(null);
@@ -75,6 +87,10 @@ export function useSpeech() {
 
     recognition.onend = () => {
       setIsListening(false);
+      // Se não ocorreu um evento de erro fatal, assinala para submit
+      if (!errorMsgRef.current) {
+         if (onEndCallbackRef.current) onEndCallbackRef.current();
+      }
     };
 
     recognitionRef.current = recognition;

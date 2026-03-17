@@ -1,14 +1,28 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
+import { PassThrough } from 'node:stream';
 import { recipeBodySchema } from '../schemas/recipe.schema.js';
 import { generateRecipe } from '../services/groq.service.js';
 import { optionalAuth } from '../middlewares/auth.middleware.js';
 import { saveRecipeToHistory } from '../services/supabase.service.js';
+import { redisClient } from '../config/redis.js';
+
+// Função para normalizar ingredientes para Hash Cache (Lowercase e Ordem Alfabética)
+const normalizeIngredientsKey = (input: string) => {
+  return input
+    .toLowerCase()
+    .split(/[\s,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .sort()
+    .join('_');
+};
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
   app.decorateRequest('userId', undefined);
 
   app.post('/recipes', { preHandler: [optionalAuth] }, async (request, reply) => {
+    let sseStream: PassThrough | null = null;
     try {
       // 1. Validação Extrema (Zod)
       const bodyValidation = recipeBodySchema.safeParse(request.body);
@@ -30,16 +44,49 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
 
       const { ingredients } = bodyValidation.data;
 
-      // Rate limit check for graceful degradation
-      // O rateLimit foi configurado com continueExceeding: true
-      const rateLimitInfo = (request as any).rateLimit;
-      const isRateLimited = rateLimitInfo ? rateLimitInfo.current > rateLimitInfo.limit : false;
+      // 2. Cache Distribuído (Bypass completo do Rate Limit via Redis)
+      const cacheKey = `recipe:${normalizeIngredientsKey(ingredients)}`;
+      try {
+        const cachedRecipe = await redisClient.get(cacheKey);
+        
+        if (cachedRecipe) {
+           app.log.info({ type: 'CACHE_HIT', ingredients, msg: 'Receita servida instantaneamente do Redis Cache.' });
+           
+           const cacheStream = new PassThrough();
+           void reply
+             .type('text/event-stream')
+             .header('Cache-Control', 'no-cache')
+             .header('Connection', 'keep-alive')
+             .send(cacheStream);
+           
+           cacheStream.write(`data: ${JSON.stringify({ chunk: cachedRecipe })}\n\n`);
+           cacheStream.write('event: done\ndata: {}\n\n');
+           cacheStream.end();
+           return;
+        }
+      } catch (redisError) {
+         app.log.warn(redisError, 'Falha ao conectar com o Redis, servindo a request via Groq.');
+      }
+
+      // Rate limit manual no Redis para degradação graciosa (5 requests/hora)
+      const ip = request.ip || 'unknown_ip';
+      const userRtKey = `graceful_limit:${ip}`;
+      let isRateLimited = false;
+      try {
+         const currentReqs = await redisClient.incr(userRtKey);
+         if (currentReqs === 1) {
+            await redisClient.expire(userRtKey, 3600); // 1 hora TTL
+         }
+         isRateLimited = currentReqs > 5;
+      } catch (e) {
+         app.log.warn(e, 'Falha no contador manual do Redis, avançando sem limitador.');
+      }
 
       if (isRateLimited) {
          app.log.warn({ 
            type: 'GRACEFUL_DEGRADATION',
            msg: 'Rate limit excedido. Aplicando degradação graciosa para o fallback model.',
-           limit: rateLimitInfo?.limit
+           limit: 5
          });
       }
 
@@ -47,42 +94,59 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
       const startTime = performance.now();
       const stream = await generateRecipe(ingredients, isRateLimited);
 
-      // 3. Configurar os Headers para Server-Sent Events (SSE)
-      void reply.header('Content-Type', 'text/event-stream');
-      void reply.header('Cache-Control', 'no-cache');
-      void reply.header('Connection', 'keep-alive');
+      // 3. Configurar SSE via PassThrough (garante que headers CORS são enviados pelo Fastify)
+      sseStream = new PassThrough();
+      void reply
+        .type('text/event-stream')
+        .header('Cache-Control', 'no-cache')
+        .header('Connection', 'keep-alive')
+        .send(sseStream);
+
+      // Tratar desconexão do cliente
+      let clientDisconnected = false;
+      request.raw.on('close', () => {
+        clientDisconnected = true;
+      });
 
       let fullResponseMarkup = '';
 
       // 4. Iterar sobre os pedaços (Chunks) do stream
       for await (const chunk of stream) {
+        if (clientDisconnected) break;
+
         const content = chunk.choices[0]?.delta?.content || '';
         
         if (content) {
           fullResponseMarkup += content;
-          // Escreve diretamente na stream de resposta bruta (Fastify raw reply)
-          reply.raw.write(`data: ${JSON.stringify({ chunk: content })}\n\n`);
+          sseStream.write(`data: ${JSON.stringify({ chunk: content })}\n\n`);
         }
       }
 
       // 5. Avaliação anti-injection post-processamento (Se Shield reagiu devolvendo error obj)
       try {
         const parsedFinalObj = JSON.parse(fullResponseMarkup || '{}') as Record<string, unknown>;
-        if (parsedFinalObj && 'error' in parsedFinalObj) {
+        if ('error' in parsedFinalObj) {
            app.log.warn({
              type: 'SECURITY_BLOCK_LLM',
              msg: 'Prompt Shield bloqueou uma tentativa maliciosa (jailbreak bypass).',
              payloadSizeBytes: ingredients.length,
            });
            
-           reply.raw.write(`data: ${JSON.stringify({ error: 'Unprocessable Entity', message: 'Input inválido detetado.' })}\n\n`);
-           reply.raw.end();
-           return reply;
+           sseStream.write(`data: ${JSON.stringify({ error: 'Unprocessable Entity', message: 'Input inválido detetado.' })}\n\n`);
+           sseStream.end();
+           return;
         }
         
         // 6. Persistir no histórico se o utilizador estiver autenticado
         if (request.userId) {
           void saveRecipeToHistory(request.userId, ingredients, parsedFinalObj);
+        }
+        
+        // 7. Guardar Cache no Redis com TTL de 24 horas (86400 segundos)
+        try {
+          await redisClient.setex(cacheKey, 86400, fullResponseMarkup);
+        } catch (setCacheError) {
+          app.log.warn(setCacheError, 'Erro ao criar chave no Redis Cache');
         }
 
       } catch (parseError) {
@@ -97,27 +161,29 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
         msg: 'Geração de receita concluída via stream.',
       });
 
-      // 7. Encerra o Stream de forma amigável
-      reply.raw.write('event: done\ndata: {}\n\n');
-      reply.raw.end();
+      // 8. Encerra o Stream de forma amigável
+      sseStream.write('event: done\ndata: {}\n\n');
+      sseStream.end();
 
-      // O reply.raw.end() finaliza, não retornamos um body comum via Fastify reply standard send()
-      return reply;
+      return;
 
     } catch (error) {
       app.log.error(error);
       
-      if (!reply.raw.headersSent) {
+      if (sseStream && !sseStream.destroyed) {
+          sseStream.write(`data: ${JSON.stringify({ error: 'Internal Server Error' })}\n\n`);
+          sseStream.end();
+          return;
+      }
+
+      if (!reply.sent) {
           return await reply.status(500).send({
             statusCode: 500,
             error: 'Internal Server Error',
             message: 'Ocorreu um erro interno na infraestrutura AI.',
           });
-      } else {
-          reply.raw.write(`data: ${JSON.stringify({ error: 'Internal Server Error' })}\n\n`);
-          reply.raw.end();
-          return reply;
       }
+      return;
     }
   });
 };

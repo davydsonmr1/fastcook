@@ -7,7 +7,7 @@ import { z } from 'zod';
  */
 const envSchema = z.object({
   // Servidor
-  PORT: z.coerce.number().default(3001),
+  PORT: z.coerce.number().default(3000),
   HOST: z.string().default('0.0.0.0'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
@@ -20,6 +20,9 @@ const envSchema = z.object({
 
   // CORS
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+
+  // Redis
+  REDIS_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

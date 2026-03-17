@@ -4,6 +4,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import sensible from '@fastify/sensible';
 import { env } from './config/env.js';
+import { redisClient } from './config/redis.js';
 import { recipeRoutes } from './routes/recipe.routes.js';
 
 export async function buildServer() {
@@ -23,19 +24,26 @@ export async function buildServer() {
   });
 
   await app.register(cors, {
-    origin: env.CORS_ORIGIN,
+    origin: (origin, cb) => {
+      // Se estiver na whitelist ou se for uma origin localhost (com hostname ou IP absoluto)
+      if (!origin || origin === env.CORS_ORIGIN || /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0):\d+$/.test(origin)) {
+        cb(null, true);
+        return;
+      }
+      cb(new Error("Não permitido por CORS: " + origin), false);
+    },
     credentials: true,
   });
 
   await app.register(rateLimit, {
-    max: 5,
+    max: 100, // Limite global de DDoS
     timeWindow: '1 hour',
-    continueExceeding: true, // Permite que a rota decida o que fazer (ex: degradação graciosa de modelo)
+    ...(env.REDIS_URL ? { redis: redisClient } : {}),
     errorResponseBuilder: function () {
       return {
         statusCode: 429,
         error: "Too Many Requests",
-        message: "Atingiu o limite de requisições.",
+        message: "Múltiplas requisições detetadas. Bloqueio de segurança.",
       };
     },
   });

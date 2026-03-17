@@ -13,7 +13,7 @@ function parsePartialJson(jsonString: string): Partial<RecipeResponse> {
   if (!jsonString) return {};
   try {
     return JSON.parse(jsonString);
-  } catch (e) {
+  } catch {
     const nameMatch = jsonString.match(/"name"\s*:\s*"([^"]+)/);
     const prepMatch = jsonString.match(/"prepTime"\s*:\s*"([^"]+)/);
     const diffMatch = jsonString.match(/"difficulty"\s*:\s*(\d+)/);

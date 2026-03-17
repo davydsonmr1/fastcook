@@ -11,10 +11,12 @@ sequenceDiagram
     autonumber
     
     actor Utilizador as Utilizador
+    actor Utilizador as Utilizador
     box Cloud Segura (VPC Dockerizada)
         participant Frontend as Nginx WebServer (React+Vite)
         participant SW as Service Worker (PWA Cache)
         participant Backend as Node.js / Fastify (Contentor Seguro)
+        participant Redis as Redis (Rate Limit & In-Memory Cache)
     end
     box API Gateway/Third Party
         participant Groq as Groq AI (Llama 3)
@@ -38,25 +40,25 @@ sequenceDiagram
     
     %% Passo 3: Segurança no Backend
     activate Backend
-    Backend->>Backend: 🛡️ Rate Limiting (Previne DDoS/Abuso)
+    Backend->>Redis: 🛡️ Incrementa contador Rate Limit
     Backend->>Backend: 🔑 Auth Middleware (Valida JWT via supabaseAdmin.auth.getUser)
     Backend->>Backend: 🛡️ Validação Zod (Bloqueia injeções '<>' '[]' '{}')
     Backend->>Backend: 🛡️ Prompt Shield (Sanitiza instruções ao LLM)
     
-    %% Passo 4: Verificação de Cache
-    Backend->>Supabase: Verifica recipes_cache (hash da query)
-    activate Supabase
+    %% Passo 4: Verificação de Cache Distribuído
+    Backend->>Redis: Verifica Cache Hit (GET recipe:{ingredientes})
+    activate Redis
     
-    alt Encontrado no Cache (TTL Válido)
-        Supabase-->>Backend: Retorna receita em JSON
-        Backend-->>SW: HTTP 200 (Receita)
-        SW-->>Frontend: Receita (guardada em cache local para offline)
+    alt Encontrado no Cache
+        Redis-->>Backend: Retorna receita em JSON (Instantâneo)
+        Backend-->>SW: HTTP 200 via SSE Bypass (Receita)
+        SW-->>Frontend: Receita imediata
     else Abuso Detetado (Shield / Rate Limit)
         Backend-->>Frontend: HTTP 429 ou 422
         Frontend-->>Utilizador: Alerta UX amigável ("Tente novamente" / "Input Inválido")
     else Não Encontrado (Cache Miss)
-        Supabase-->>Backend: Null
-        deactivate Supabase
+        Redis-->>Backend: Null
+        deactivate Redis
         
         %% Passo 5: LLM Stream & Degradação Graciosa
         alt Rate Limit Normal (<5 requests)
@@ -74,7 +76,8 @@ sequenceDiagram
         deactivate Groq
         
         %% Passo 7: Guardar no Histórico (No final do Stream)
-        Backend-)Supabase: Insere JSON completo no recipes_cache + user_id (SERVICE_ROLE_KEY)
+        Backend-)Supabase: Insere JSON completo no banco (Histórico de Utilizador)
+        Backend-)Redis: Guarda cache final do LLM (TTL 24h)
         note over Backend,Supabase: Se user_id presente,<br/>associa receita ao histórico após o evento 'done'.
     end
     deactivate Backend

@@ -1,4 +1,5 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
+import { PassThrough } from 'node:stream';
 import { recipeBodySchema } from '../schemas/recipe.schema.js';
 import { generateRecipe } from '../services/groq.service.js';
 import { optionalAuth } from '../middlewares/auth.middleware.js';
@@ -21,6 +22,7 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
   app.decorateRequest('userId', undefined);
 
   app.post('/recipes', { preHandler: [optionalAuth] }, async (request, reply) => {
+    let sseStream: PassThrough | null = null;
     try {
       // 1. Validação Extrema (Zod)
       const bodyValidation = recipeBodySchema.safeParse(request.body);
@@ -50,14 +52,16 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
         if (cachedRecipe) {
            app.log.info({ type: 'CACHE_HIT', ingredients, msg: 'Receita servida instantaneamente do Redis Cache.' });
            
-           void reply.header('Content-Type', 'text/event-stream');
-           void reply.header('Cache-Control', 'no-cache');
-           void reply.header('Connection', 'keep-alive');
+           const cacheStream = new PassThrough();
+           void reply
+             .type('text/event-stream')
+             .header('Cache-Control', 'no-cache')
+             .header('Connection', 'keep-alive')
+             .send(cacheStream);
            
-           // Emular stream para compatibilidade com a UI atual
-           reply.raw.write(`data: ${JSON.stringify({ chunk: cachedRecipe })}\n\n`);
-           reply.raw.write('event: done\ndata: {}\n\n');
-           reply.raw.end();
+           cacheStream.write(`data: ${JSON.stringify({ chunk: cachedRecipe })}\n\n`);
+           cacheStream.write('event: done\ndata: {}\n\n');
+           cacheStream.end();
            return;
         }
       } catch (redisError) {
@@ -90,21 +94,31 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
       const startTime = performance.now();
       const stream = await generateRecipe(ingredients, isRateLimited);
 
-      // 3. Configurar os Headers para Server-Sent Events (SSE)
-      void reply.header('Content-Type', 'text/event-stream');
-      void reply.header('Cache-Control', 'no-cache');
-      void reply.header('Connection', 'keep-alive');
+      // 3. Configurar SSE via PassThrough (garante que headers CORS são enviados pelo Fastify)
+      sseStream = new PassThrough();
+      void reply
+        .type('text/event-stream')
+        .header('Cache-Control', 'no-cache')
+        .header('Connection', 'keep-alive')
+        .send(sseStream);
+
+      // Tratar desconexão do cliente
+      let clientDisconnected = false;
+      request.raw.on('close', () => {
+        clientDisconnected = true;
+      });
 
       let fullResponseMarkup = '';
 
       // 4. Iterar sobre os pedaços (Chunks) do stream
       for await (const chunk of stream) {
+        if (clientDisconnected) break;
+
         const content = chunk.choices[0]?.delta?.content || '';
         
         if (content) {
           fullResponseMarkup += content;
-          // Escreve diretamente na stream de resposta bruta (Fastify raw reply)
-          reply.raw.write(`data: ${JSON.stringify({ chunk: content })}\n\n`);
+          sseStream.write(`data: ${JSON.stringify({ chunk: content })}\n\n`);
         }
       }
 
@@ -118,8 +132,8 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
              payloadSizeBytes: ingredients.length,
            });
            
-           reply.raw.write(`data: ${JSON.stringify({ error: 'Unprocessable Entity', message: 'Input inválido detetado.' })}\n\n`);
-           reply.raw.end();
+           sseStream.write(`data: ${JSON.stringify({ error: 'Unprocessable Entity', message: 'Input inválido detetado.' })}\n\n`);
+           sseStream.end();
            return;
         }
         
@@ -130,7 +144,6 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
         
         // 7. Guardar Cache no Redis com TTL de 24 horas (86400 segundos)
         try {
-          // A UI consome aos lotes (Pedaços JSON ou raw texto). Gravar string bruta que a UI juntaria
           await redisClient.setex(cacheKey, 86400, fullResponseMarkup);
         } catch (setCacheError) {
           app.log.warn(setCacheError, 'Erro ao criar chave no Redis Cache');
@@ -148,27 +161,29 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
         msg: 'Geração de receita concluída via stream.',
       });
 
-      // 7. Encerra o Stream de forma amigável
-      reply.raw.write('event: done\ndata: {}\n\n');
-      reply.raw.end();
+      // 8. Encerra o Stream de forma amigável
+      sseStream.write('event: done\ndata: {}\n\n');
+      sseStream.end();
 
-      // O reply.raw.end() finaliza, não retornamos um body comum via Fastify reply standard send()
       return;
 
     } catch (error) {
       app.log.error(error);
       
-      if (!reply.raw.headersSent) {
+      if (sseStream && !sseStream.destroyed) {
+          sseStream.write(`data: ${JSON.stringify({ error: 'Internal Server Error' })}\n\n`);
+          sseStream.end();
+          return;
+      }
+
+      if (!reply.sent) {
           return await reply.status(500).send({
             statusCode: 500,
             error: 'Internal Server Error',
             message: 'Ocorreu um erro interno na infraestrutura AI.',
           });
-      } else {
-          reply.raw.write(`data: ${JSON.stringify({ error: 'Internal Server Error' })}\n\n`);
-          reply.raw.end();
-          return;
       }
+      return;
     }
   });
 };

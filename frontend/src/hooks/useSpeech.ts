@@ -22,11 +22,16 @@ export function useSpeech(onEndCallback?: () => void) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   const errorMsgRef = useRef<string | null>(null);
+  const onEndCallbackRef = useRef(onEndCallback);
   
-  // Sincroniza o estado do ref para a arrow function dentro do onEnd
+  // Sincroniza o estado dos refs para as arrow functions dentro dos handlers
   useEffect(() => {
      errorMsgRef.current = errorMsg;
   }, [errorMsg]);
+
+  useEffect(() => {
+     onEndCallbackRef.current = onEndCallback;
+  }, [onEndCallback]);
 
   // useRef para guardar a instância e evitar recriações sucessivas
   const recognitionRef = useRef<unknown>(null);
@@ -84,7 +89,7 @@ export function useSpeech(onEndCallback?: () => void) {
       setIsListening(false);
       // Se não ocorreu um evento de erro fatal, assinala para submit
       if (!errorMsgRef.current) {
-         if (onEndCallback) onEndCallback();
+         if (onEndCallbackRef.current) onEndCallbackRef.current();
       }
     };
 

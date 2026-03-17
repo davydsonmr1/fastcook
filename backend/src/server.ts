@@ -38,7 +38,7 @@ export async function buildServer() {
   await app.register(rateLimit, {
     max: 100, // Limite global de DDoS
     timeWindow: '1 hour',
-    redis: redisClient,
+    ...(env.REDIS_URL ? { redis: redisClient } : {}),
     errorResponseBuilder: function () {
       return {
         statusCode: 429,

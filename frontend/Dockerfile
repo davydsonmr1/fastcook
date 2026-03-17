@@ -4,8 +4,8 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Dependências
-COPY package*.json ./
-RUN npm ci
+COPY package.json ./
+RUN npm install --legacy-peer-deps
 
 # Restante do código
 COPY . .

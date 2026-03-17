@@ -1,20 +1,47 @@
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import { FastifyInstance } from 'fastify';
-import { buildServer } from '../src/server.js';
-import * as groqService from '../src/services/groq.service.js';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import { jest } from '@jest/globals';
+import type { FastifyInstance } from 'fastify';
 
-// Mock do Groq Service para não consumir tokens reais durante os testes
-jest.mock('../src/services/groq.service.js', () => ({
-  generateRecipe: jest.fn().mockImplementation(async function* () {
-    yield { choices: [{ delta: { content: '{"name":"Receita de Teste","prepTime":"10m","difficulty":1,"steps":["Passo 1"]}' } }] };
-  }),
+// ── ESM Mocks (unstable_mockModule ANTES dos imports dinâmicos) ──
+
+const mockGenerateRecipe = jest.fn<(...args: unknown[]) => AsyncGenerator>();
+const mockSaveRecipeToHistory = jest.fn<() => Promise<void>>();
+
+// In-memory store para simular Redis no CI (sem dependência externa)
+let redisCounters: Record<string, number> = {};
+let redisStore: Record<string, string> = {};
+
+jest.unstable_mockModule('../src/services/groq.service.js', () => ({
+  generateRecipe: mockGenerateRecipe,
 }));
 
-// Mock do Supabase Service para evitar conexões com a DB real
-jest.mock('../src/services/supabase.service.js', () => ({
-  saveRecipeToHistory: jest.fn().mockResolvedValue(undefined as never),
+jest.unstable_mockModule('../src/services/supabase.service.js', () => ({
+  saveRecipeToHistory: mockSaveRecipeToHistory.mockResolvedValue(undefined),
 }));
+
+jest.unstable_mockModule('../src/config/redis.js', () => ({
+  redisClient: {
+    get: jest.fn<(k: string) => Promise<string | null>>()
+      .mockImplementation(async (key: string) => redisStore[key] ?? null),
+    setex: jest.fn<(k: string, t: number, v: string) => Promise<void>>()
+      .mockImplementation(async (key: string, _ttl: number, value: string) => { redisStore[key] = value; }),
+    incr: jest.fn<(k: string) => Promise<number>>()
+      .mockImplementation(async (key: string) => {
+        redisCounters[key] = (redisCounters[key] || 0) + 1;
+        return redisCounters[key];
+      }),
+    expire: jest.fn<() => Promise<number>>().mockResolvedValue(1),
+    disconnect: jest.fn(),
+    quit: jest.fn<() => Promise<string>>().mockResolvedValue('OK'),
+    on: jest.fn(),
+    status: 'ready',
+  },
+}));
+
+// ── Imports dinâmicos APÓS os mocks ──────────────────────────
+const { buildServer } = await import('../src/server.js');
+const groqService = await import('../src/services/groq.service.js');
+const { redisClient } = await import('../src/config/redis.js');
 
 describe('FlashCook API Security and DevSecOps Tests', () => {
   let app: FastifyInstance;
@@ -22,6 +49,14 @@ describe('FlashCook API Security and DevSecOps Tests', () => {
   beforeAll(async () => {
     app = await buildServer();
     await app.ready();
+  });
+
+  beforeEach(() => {
+    mockGenerateRecipe.mockImplementation(async function* () {
+      yield { choices: [{ delta: { content: '{"name":"Receita de Teste","prepTime":"10m","difficulty":1,"steps":["Passo 1"]}' } }] };
+    });
+    redisCounters = {};
+    redisStore = {};
   });
 
   afterAll(async () => {
@@ -46,6 +81,9 @@ describe('FlashCook API Security and DevSecOps Tests', () => {
 
   it('2. Rate Limiting: Deve acionar Fallback de Modelo Gracioso após 5 requests na mesma janela', async () => {
     const mockIng = { ingredients: "cebola, tomate" };
+
+    // Desativar cache para forçar todas as requests a passar pelo rate-limit
+    (redisClient.get as ReturnType<typeof jest.fn>).mockResolvedValue(null);
 
     // Fazer 5 requisições rápidas para esgotar o limite do Rate Limit
     for (let i = 0; i < 5; i++) {
@@ -72,7 +110,7 @@ describe('FlashCook API Security and DevSecOps Tests', () => {
     expect(responseLimitExceeded.headers['content-type']).toContain('text/event-stream');
     // 3. A Função da IA deve ter sido chamada com `isRateLimited` sendo TRUE
     expect(generateRecipeSpy).toHaveBeenLastCalledWith(mockIng.ingredients, true);
-  });
+  }, 15000);
 
   it('3. Anonimato: Rota deve funcionar sem Bearer Token, não gravando histórico em banco de dados', async () => {
     const suspensePayload = { ingredients: "feijão, arroz" };

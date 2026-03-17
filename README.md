@@ -29,14 +29,14 @@ A Inteligência Artificial interpreta os seus ingredientes e o nosso Backend pro
 
 - 🎙️ **Voice-First Experience**: Diga o que tem. Web Speech API converte a fala sem armazenar áudio (LGPD).
 - ♻️ **Zero Waste (Desperdício Zero)**: A IA do Groq prioriza receitas que utilizam *exclusivamente* o que você ditou.
-- ⚡ **Streaming IA**: Interface reativa em tempo real. Sem barras de "loading" infinitas.
+- ⚡ **Real-time AI Streaming (SSE)**: Interface reativa com efeito de escrita em tempo real, baseada em Server-Sent Events. Sem barras de "loading" infinitas.
 - � **PWA Instalável & Offline**: Instale no telemóvel como uma app nativa. Receitas já consultadas ficam disponíveis sem ligação à internet graças ao Service Worker (Workbox).- 🔐 **Login com Google**: Autenticação via Google OAuth (Supabase Auth). Quando logado, as receitas geradas ficam guardadas no seu histórico pessoal protegido por RLS.
 - 📋 **Histórico de Receitas**: Consulte todas as suas receitas passadas. Os dados são isolados por utilizador — ninguém vê as suas receitas.
 - 📤 **Partilha no WhatsApp**: Partilhe receitas com amigos num formato limpo (texto puro, sem IDs de base de dados expostos).- �🛡️ **Segurança by Design**:
   - *Row Level Security (RLS)* no Supabase: Cada utilizador isolado.
   - *Validação Extrema (Zod)*: Rejeição imediata via Regex de carateres perigosos (`{}`, `<>`, `[]`).
   - *Prompt Shield* no Fastify: System Prompt estrito previne Jailbreaks do LLM. Modo *Kill-Switch*.
-  - *Rate Limiting*: 5 requests/hora com Degradação Graciosa informando os utilizadores em vez de Crash.
+  - *Rate Limiting com Degradação Graciosa*: Após 5 requests/hora, o sistema transita perfeitamente do modelo pesado para um modelo mais leve, protegendo a faturação sem causar erros 429 para o utilizador.
   - *Cache Inteligente*: Redução drástica de gastos de tokens e latência, protegida por *TTL (Time to Live)* e *Hashing*.
 
 ---

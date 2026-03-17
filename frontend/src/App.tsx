@@ -11,7 +11,7 @@ import { useAuth } from './contexts/AuthContext';
 function App() {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<'home' | 'history'>('home');
-  const { isListening, transcript, error: speechError, startListening, stopListening, resetTranscript } = useSpeech();
+  const { isListening, transcript, error: speechError, startListening, stopListening, resetTranscript } = useSpeech(() => setShouldSubmit(true));
   
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<RecipeResponse | null>(null);
@@ -35,11 +35,15 @@ function App() {
     resetTranscript();
   };
 
+  // Novo estado para indicar quando devemos submeter automaticamente
+  const [shouldSubmit, setShouldSubmit] = useState(false);
+
   const handleToggleListen = () => {
     // Limpa estado anterior na nova tentativa
     setApiErrorMsg(null);
     setResult(null);
     setPartialRecipeText('');
+    setShouldSubmit(false);
 
     if (isListening) {
       // Paragem manual pelo microfone
@@ -53,6 +57,14 @@ function App() {
       startListening();
     }
   };
+
+  // Efeito responsavel pela submissão natural quando a Web Speech API decide parar
+  useEffect(() => {
+    if (!isListening && transcript.length > 3 && shouldSubmit) {
+      void submitRecipe(transcript);
+      setShouldSubmit(false);
+    }
+  }, [isListening, transcript, shouldSubmit]);
 
   const submitRecipe = async (ingredients: string) => {
     setIsLoading(true);

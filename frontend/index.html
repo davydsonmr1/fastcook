@@ -10,6 +10,27 @@
     <title>FlashCook</title>
   </head>
   <body>
+    <!-- Capturador de Crash Oculto -->
+    <script>
+      window.addEventListener('error', function(event) {
+        document.body.innerHTML += '<div style="color:red;z-index:9999;position:fixed;top:0;left:0;background:white;padding:20px;border-bottom:1px solid red;width:100%;">' + 
+        '<b>Erro Fatal JS:</b> ' + event.message + '<br/><small>' + event.filename + ':' + event.lineno + '</small></div>';
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        document.body.innerHTML += '<div style="color:red;z-index:9999;position:fixed;top:0;left:0;background:white;padding:20px;border-bottom:1px solid red;width:100%;">' + 
+        '<b>Promise Rejeitada (Crash):</b> ' + (event.reason && event.reason.message ? event.reason.message : String(event.reason)) + '</div>';
+      });
+    </script>
+    <script>
+      window.addEventListener('error', function(event) {
+        document.body.innerHTML += '<div style="color:red;z-index:9999;position:fixed;top:0;left:0;background:white;padding:20px;border-bottom:1px solid red;width:100%;">' + 
+        '<b>Erro Fatal JS:</b> ' + event.message + '<br/><small>' + event.filename + ':' + event.lineno + '</small></div>';
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        document.body.innerHTML += '<div style="color:red;z-index:9999;position:fixed;top:0;left:0;background:white;padding:20px;border-bottom:1px solid red;width:100%;">' + 
+        '<b>Promise Rejeitada (Crash):</b> ' + (event.reason && event.reason.message ? event.reason.message : String(event.reason)) + '</div>';
+      });
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

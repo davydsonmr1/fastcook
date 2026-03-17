@@ -25,12 +25,12 @@ export async function buildServer() {
 
   await app.register(cors, {
     origin: (origin, cb) => {
-      // Se estiver na whitelist ou se for uma origin localhost
-      if (!origin || origin === env.CORS_ORIGIN || /^https?:\/\/localhost:\d+$/.test(origin)) {
+      // Se estiver na whitelist ou se for uma origin localhost (com hostname ou IP absoluto)
+      if (!origin || origin === env.CORS_ORIGIN || /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0):\d+$/.test(origin)) {
         cb(null, true);
         return;
       }
-      cb(new Error("Não permitido por CORS"), false);
+      cb(new Error("Não permitido por CORS: " + origin), false);
     },
     credentials: true,
   });

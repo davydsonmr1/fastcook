@@ -110,9 +110,10 @@ export async function generateRecipe(ingredients: string, onChunk?: (text: strin
       throw new ApiError(500, 'Erro ao processar a receita gerada.');
     }
   } catch (error) {
-    // Se o erro provém de indisponibilidade de rede (Backend down)
+    // Se o erro provém de indisponibilidade de rede (Backend down) ou CORS
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new ApiError(0, 'Não foi possível contactar o servidor. Verifique a sua ligação.');
+      console.error('[Network Issue] Falha ao tentar contactar a API em:', apiUrl, 'Erro:', error);
+      throw new ApiError(0, `Não foi possível contactar o servidor em ${apiUrl}. Verifique a sua ligação ou se o servidor está online nessa porta.`);
     }
     
     // Repassa Erros customizados já formatados no bloco acima

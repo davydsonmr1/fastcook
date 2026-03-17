@@ -116,9 +116,10 @@ function App() {
                 }
                 ${isLoading ? 'opacity-50 cursor-not-allowed scale-95' : ''}
               `}
-              aria-label={isListening ? "Parar de ouvir" : "Tocar para ditar ingredientes"}
+              aria-label={isListening ? "Parar de ouvir e enviar ingredientes" : "Pressione para falar os ingredientes"}
+              aria-pressed={isListening}
             >
-              <Mic className={`w-12 h-12 ${isListening ? 'animate-bounce' : ''}`} />
+              <Mic className={`w-12 h-12 ${isListening ? 'animate-bounce' : ''}`} aria-hidden="true" />
               
               {/* Ripple effect when listening */}
               {isListening && (
@@ -131,13 +132,18 @@ function App() {
                 <button 
                   onClick={() => { stopListening(); void submitRecipe('Cebola, alho, dois ovos e bife de atum'); }} 
                   className="mb-4 text-xs font-semibold text-primary-600 uppercase tracking-wider"
+                  aria-label="Simular uso da API enviando bife de atum"
                 >
                    Simular API de Voz (Bife de atum)
                 </button>
             )}
 
             {/* Transcript Area */}
-            <div className="w-full min-h-24 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-center text-center transition-all">
+            <div 
+              className="w-full min-h-24 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-center text-center transition-all"
+              aria-live="polite"
+              aria-atomic="true"
+            >
               {isListening ? (
                  transcript ? (
                     <p className="text-slate-800 font-medium italic">"{transcript}"</p>

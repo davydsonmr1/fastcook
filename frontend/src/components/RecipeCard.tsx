@@ -151,9 +151,10 @@ export function RecipeCard({ recipe, partialText, onClear, isStreaming }: Recipe
         <button
           onClick={() => displayRecipe.steps && displayRecipe.steps.length > 0 ? shareOnWhatsApp(displayRecipe as RecipeResponse) : null}
           disabled={isStreaming}
+          aria-label="Partilhar receita no WhatsApp"
           className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${onClear ? 'flex-1' : 'w-full'} ${isStreaming ? 'text-slate-400 bg-slate-50 cursor-not-allowed' : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'}`}
         >
-          <Share2 className="w-4 h-4" />
+          <Share2 className="w-4 h-4" aria-hidden="true" />
           Partilhar
         </button>
 
@@ -161,9 +162,10 @@ export function RecipeCard({ recipe, partialText, onClear, isStreaming }: Recipe
         {onClear && (
           <button
             onClick={onClear}
+            aria-label="Começar uma nova receita"
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 transition-colors"
           >
-            <ChefHat className="w-4 h-4" />
+            <ChefHat className="w-4 h-4" aria-hidden="true" />
             Nova Receita
           </button>
         )}

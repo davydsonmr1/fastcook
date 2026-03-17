@@ -6,7 +6,7 @@ import sensible from '@fastify/sensible';
 import { env } from './config/env.js';
 import { recipeRoutes } from './routes/recipe.routes.js';
 
-async function buildServer() {
+export async function buildServer() {
   const app = Fastify({
     logger: {
       level: env.NODE_ENV === 'production' ? 'info' : 'debug',

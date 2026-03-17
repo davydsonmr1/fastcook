@@ -13,6 +13,9 @@
   <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
   <img src="https://img.shields.io/badge/Groq_AI-F55036?style=for-the-badge&logo=groq&logoColor=white" alt="Groq" />
   <img src="https://img.shields.io/badge/Security-DevSecOps-4a154b?style=for-the-badge" alt="Security" />
+  <img src="https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/Coverage-Jest-C21325?style=for-the-badge&logo=jest&logoColor=white" alt="Jest Tests" />
+  <img src="https://img.shields.io/badge/a11y-Voice_First-0D0D0D?style=for-the-badge&logo=w3c&logoColor=white" alt="Acessibilidade WGAG" />
   <img src="https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA Ready" />
   <img src="https://img.shields.io/badge/Google_Auth-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Auth" />
 </p>

@@ -22,8 +22,11 @@ export class ApiError extends Error {
  * Envia o Bearer Token JWT do Supabase (se autenticado) para persistir no histórico.
  */
 export async function generateRecipe(ingredients: string, onChunk?: (text: string) => void): Promise<RecipeResponse> {
-  // Lemos a URL através das variáveis padrão do Vite
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  // Lemos a URL através das variáveis padrão do Vite. 
+  // Usa typeof para evitar fallback se a string estiver vazia (relativa no Docker Nginx)
+  const apiUrl = typeof import.meta.env.VITE_API_URL === 'string' 
+      ? import.meta.env.VITE_API_URL 
+      : 'http://localhost:3000'; // Alterado para bater no novo porta docker local
 
   // Obtém o token JWT do Supabase (se o utilizador estiver autenticado)
   const { data: { session } } = await supabase.auth.getSession();

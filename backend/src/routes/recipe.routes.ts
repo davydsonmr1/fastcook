@@ -1,15 +1,9 @@
-import { FastifyInstance, FastifyPluginAsync, FastifyRequest } from 'fastify';
+import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { recipeBodySchema } from '../schemas/recipe.schema.js';
 import { generateRecipe } from '../services/groq.service.js';
 import { optionalAuth } from '../middlewares/auth.middleware.js';
 import { saveRecipeToHistory } from '../services/supabase.service.js';
 import { redisClient } from '../config/redis.js';
-
-interface RateLimitInfo {
-  current: number;
-  limit: number;
-  remaining: number;
-}
 
 // Função para normalizar ingredientes para Hash Cache (Lowercase e Ordem Alfabética)
 const normalizeIngredientsKey = (input: string) => {
@@ -70,17 +64,25 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
          app.log.warn(redisError, 'Falha ao conectar com o Redis, servindo a request via Groq.');
       }
 
-      // Rate limit check for graceful degradation
-      // O rateLimit foi configurado com continueExceeding: true
-      const reqWithRateLimit = request as FastifyRequest & { rateLimit?: RateLimitInfo };
-      const rateLimitInfo = reqWithRateLimit.rateLimit;
-      const isRateLimited = rateLimitInfo ? rateLimitInfo.current > rateLimitInfo.limit : false;
+      // Rate limit manual no Redis para degradação graciosa (5 requests/hora)
+      const ip = request.ip || 'unknown_ip';
+      const userRtKey = `graceful_limit:${ip}`;
+      let isRateLimited = false;
+      try {
+         const currentReqs = await redisClient.incr(userRtKey);
+         if (currentReqs === 1) {
+            await redisClient.expire(userRtKey, 3600); // 1 hora TTL
+         }
+         isRateLimited = currentReqs > 5;
+      } catch (e) {
+         app.log.warn(e, 'Falha no contador manual do Redis, avançando sem limitador.');
+      }
 
       if (isRateLimited) {
          app.log.warn({ 
            type: 'GRACEFUL_DEGRADATION',
            msg: 'Rate limit excedido. Aplicando degradação graciosa para o fallback model.',
-           limit: rateLimitInfo?.limit
+           limit: 5
          });
       }
 

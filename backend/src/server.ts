@@ -29,15 +29,14 @@ export async function buildServer() {
   });
 
   await app.register(rateLimit, {
-    max: 5,
+    max: 100, // Limite global de DDoS
     timeWindow: '1 hour',
     redis: redisClient,
-    continueExceeding: true, // Permite que a rota decida o que fazer (ex: degradação graciosa de modelo)
     errorResponseBuilder: function () {
       return {
         statusCode: 429,
         error: "Too Many Requests",
-        message: "Atingiu o limite de requisições.",
+        message: "Múltiplas requisições detetadas. Bloqueio de segurança.",
       };
     },
   });

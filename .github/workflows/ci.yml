@@ -26,11 +26,11 @@ jobs:
         cache-dependency-path: backend/package-lock.json
 
     - name: Backend - Install Dependencies
-      run: npm ci
+      run: npm install --legacy-peer-deps
       working-directory: ./backend
 
     - name: Frontend - Install Dependencies
-      run: npm ci
+      run: npm install --legacy-peer-deps
       working-directory: ./frontend
 
     - name: Security Audit (Backend)

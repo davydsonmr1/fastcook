@@ -12,8 +12,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
   // Supabase — backend usa exclusivamente a service_role (contorna RLS)
-  // A ANON_KEY é uma responsabilidade do frontend (variável VITE_)
-  SUPABASE_URL: z.string().url({ message: 'SUPABASE_URL é obrigatória' }),
+  SUPABASE_URL: z.string().min(1, { message: 'SUPABASE_URL é obrigatória' }),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, { message: 'SUPABASE_SERVICE_ROLE_KEY é obrigatória' }),
 
   // Groq AI
@@ -30,7 +29,7 @@ function validateEnv(): Env {
 
   if (!parsed.success) {
     console.error('❌ Variáveis de ambiente inválidas:');
-    console.error(parsed.error.flatten().fieldErrors);
+    console.error(parsed.error.issues);
     process.exit(1);
   }
 

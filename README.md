@@ -42,12 +42,27 @@ A Inteligência Artificial interpreta os seus ingredientes e o nosso Backend pro
   - *Rate Limiting com Degradação Graciosa*: Após 5 requests/hora, o sistema transita perfeitamente do modelo pesado para um modelo mais leve, protegendo a faturação sem causar erros 429 para o utilizador.
   - *Cache Inteligente*: Redução drástica de gastos de tokens e latência, protegida por *TTL (Time to Live)* e *Hashing*.
 
----
-
 ## 📚 Documentação Técnica (Docs as Code)
 
 Mergulhe na engenharia por trás do FlashCook. Mantemos documentação extensiva construída em Markdown com diagramas automáticos Mermaid:
 
+- 🏗️ **[Arquitetura do Sistema](docs/arquitetura.md)**: Explore a separação entre Edge (Service Worker), Backend Fastify e Cloud (Supabase/Groq).
+- 🧠 **[Engenharia Prompt Shield](docs/prompt_shield.md)**: Entenda como isolamos injeções contextuais no RAG/LLM.
+- 💽 **[Estratégia Backend e Caching](docs/cache_db.md)**: Aprofundamento no "Hash to Recipe" para evitar chamadas de tokens repetidas.
+- 🩺 **[Resiliência e Custos (SSE)](docs/resiliencia_e_custos.md)**: Como aplicámos Degradação Graciosa e Rate Limiting dinâmico para blindar a nossa faturação Cloud.
+- 🛡️ **[Testes E2E (DevSecOps e a11y)](docs/testes_e_ci.md)**: Como blindamos regressões com Jest, Auditorias NPM via GitHub Actions CI/CD e Acessibilidade WGAG.
+- 🐳 **[Deploy Enterprise e Telemetria (Docker)](docs/infraestrutura_e_deploy.md)**: Otimização *Multi-stage Containerization* com orquestração centralizada no `docker-compose.yml`, aliada a Server Logging anonimizado (RGPD).
+
+---
+
+## 🚀 Como rodar com Docker (Ambiente Produção)
+
+Para executar ambas as micro-arquiteturas encapsuladas sem instalar dependências globais de Node:
+
+```bash
+# Sobe o frontend (porta 5173 transposta do 80) e backend (porta 3000)
+docker-compose up -d --build
+```
 - 🏗️ **[Arquitetura do Sistema e Fluxo de IA](./docs/arquitetura.md)**
   Dita a receita -> Fastify Shield -> Groq AI -> Cache -> UI.
 - 🔒 **[Segurança, Privacidade e LGPD/RGPD](./docs/seguranca_e_privacidade.md)**

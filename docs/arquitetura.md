@@ -11,10 +11,12 @@ sequenceDiagram
     autonumber
     
     actor Utilizador as Utilizador
-    participant Frontend as React + Vite (Web)
-    participant SW as Service Worker (PWA Cache)
-    participant Backend as Fastify (Node.js)
-    box Cloud Segura (VPC)
+    box Cloud Segura (VPC Dockerizada)
+        participant Frontend as Nginx WebServer (React+Vite)
+        participant SW as Service Worker (PWA Cache)
+        participant Backend as Node.js / Fastify (Contentor Seguro)
+    end
+    box API Gateway/Third Party
         participant Groq as Groq AI (Llama 3)
         participant Supabase as Supabase (PostgreSQL)
     end

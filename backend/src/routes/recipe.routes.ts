@@ -15,8 +15,10 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
 
       if (!bodyValidation.success) {
         app.log.warn({
-          msg: 'Tentativa de injeção ou validação falhada bloqueada no Zod.',
-          errors: bodyValidation.error.issues,
+          type: 'SECURITY_BLOCK',
+          reason: 'Zod Validation Failure',
+          msg: 'Tentativa de payload malicioso bloqueada pelo frontend schema.',
+          payloadSizeBytes: JSON.stringify(request.body || {}).length,
         });
 
         return await reply.status(400).send({
@@ -34,10 +36,15 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
       const isRateLimited = rateLimitInfo ? rateLimitInfo.current > rateLimitInfo.limit : false;
 
       if (isRateLimited) {
-         app.log.warn({ msg: 'Rate limit excedido. Aplicando degradação graciosa de modelo para o utilizador.' });
+         app.log.warn({ 
+           type: 'GRACEFUL_DEGRADATION',
+           msg: 'Rate limit excedido. Aplicando degradação graciosa para o fallback model.',
+           limit: rateLimitInfo?.limit
+         });
       }
 
       // 2. Chama a IA protegida pelo Prompt Shield (agora retorna Stream)
+      const startTime = performance.now();
       const stream = await generateRecipe(ingredients, isRateLimited);
 
       // 3. Configurar os Headers para Server-Sent Events (SSE)
@@ -63,8 +70,9 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
         const parsedFinalObj = JSON.parse(fullResponseMarkup || '{}') as Record<string, unknown>;
         if (parsedFinalObj && 'error' in parsedFinalObj) {
            app.log.warn({
-             msg: 'Prompt Shield bloqueou uma tentativa maliciosa a nível de IA.',
-             input: ingredients,
+             type: 'SECURITY_BLOCK_LLM',
+             msg: 'Prompt Shield bloqueou uma tentativa maliciosa (jailbreak bypass).',
+             payloadSizeBytes: ingredients.length,
            });
            
            reply.raw.write(`data: ${JSON.stringify({ error: 'Unprocessable Entity', message: 'Input inválido detetado.' })}\n\n`);
@@ -80,6 +88,14 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
       } catch (parseError) {
          app.log.error(parseError, 'Erro ao fazer parse da resposta completa para o histórico');
       }
+
+      const endTime = performance.now();
+      app.log.info({
+        type: 'TELEMETRY_AI_GENERATION',
+        durationMs: Math.round(endTime - startTime),
+        isFallbackModel: isRateLimited,
+        msg: 'Geração de receita concluída via stream.',
+      });
 
       // 7. Encerra o Stream de forma amigável
       reply.raw.write('event: done\ndata: {}\n\n');

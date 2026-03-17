@@ -13,6 +13,11 @@
   <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
   <img src="https://img.shields.io/badge/Groq_AI-F55036?style=for-the-badge&logo=groq&logoColor=white" alt="Groq" />
   <img src="https://img.shields.io/badge/Security-DevSecOps-4a154b?style=for-the-badge" alt="Security" />
+  <img src="https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/Coverage-Jest-C21325?style=for-the-badge&logo=jest&logoColor=white" alt="Jest Tests" />
+  <img src="https://img.shields.io/badge/a11y-Voice_First-0D0D0D?style=for-the-badge&logo=w3c&logoColor=white" alt="Acessibilidade WGAG" />
+  <img src="https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA Ready" />
+  <img src="https://img.shields.io/badge/Google_Auth-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Auth" />
 </p>
 
 ---
@@ -27,22 +32,47 @@ A Inteligência Artificial interpreta os seus ingredientes e o nosso Backend pro
 
 - 🎙️ **Voice-First Experience**: Diga o que tem. Web Speech API converte a fala sem armazenar áudio (LGPD).
 - ♻️ **Zero Waste (Desperdício Zero)**: A IA do Groq prioriza receitas que utilizam *exclusivamente* o que você ditou.
-- ⚡ **Streaming IA**: Interface reativa em tempo real. Sem barras de "loading" infinitas.
-- 🛡️ **Segurança by Design**:
+- ⚡ **Real-time AI Streaming (SSE)**: Interface reativa com efeito de escrita em tempo real, baseada em Server-Sent Events. Sem barras de "loading" infinitas.
+- � **PWA Instalável & Offline**: Instale no telemóvel como uma app nativa. Receitas já consultadas ficam disponíveis sem ligação à internet graças ao Service Worker (Workbox).- 🔐 **Login com Google**: Autenticação via Google OAuth (Supabase Auth). Quando logado, as receitas geradas ficam guardadas no seu histórico pessoal protegido por RLS.
+- 📋 **Histórico de Receitas**: Consulte todas as suas receitas passadas. Os dados são isolados por utilizador — ninguém vê as suas receitas.
+- 📤 **Partilha no WhatsApp**: Partilhe receitas com amigos num formato limpo (texto puro, sem IDs de base de dados expostos).- �🛡️ **Segurança by Design**:
   - *Row Level Security (RLS)* no Supabase: Cada utilizador isolado.
-  - *Prompt Shield* no Fastify: Prevenção contra Jailbreaks de LLM.
+  - *Validação Extrema (Zod)*: Rejeição imediata via Regex de carateres perigosos (`{}`, `<>`, `[]`).
+  - *Prompt Shield* no Fastify: System Prompt estrito previne Jailbreaks do LLM. Modo *Kill-Switch*.
+  - *Rate Limiting com Degradação Graciosa*: Após 5 requests/hora, o sistema transita perfeitamente do modelo pesado para um modelo mais leve, protegendo a faturação sem causar erros 429 para o utilizador.
   - *Cache Inteligente*: Redução drástica de gastos de tokens e latência, protegida por *TTL (Time to Live)* e *Hashing*.
-
----
 
 ## 📚 Documentação Técnica (Docs as Code)
 
 Mergulhe na engenharia por trás do FlashCook. Mantemos documentação extensiva construída em Markdown com diagramas automáticos Mermaid:
 
+- 🏗️ **[Arquitetura do Sistema](docs/arquitetura.md)**: Explore a separação entre Edge (Service Worker), Backend Fastify e Cloud (Supabase/Groq).
+- 🧠 **[Engenharia Prompt Shield](docs/prompt_shield.md)**: Entenda como isolamos injeções contextuais no RAG/LLM.
+- 💽 **[Estratégia Backend e Caching](docs/cache_db.md)**: Aprofundamento no "Hash to Recipe" para evitar chamadas de tokens repetidas.
+- 🩺 **[Resiliência e Custos (SSE)](docs/resiliencia_e_custos.md)**: Como aplicámos Degradação Graciosa e Rate Limiting dinâmico para blindar a nossa faturação Cloud.
+- 🛡️ **[Testes E2E (DevSecOps e a11y)](docs/testes_e_ci.md)**: Como blindamos regressões com Jest, Auditorias NPM via GitHub Actions CI/CD e Acessibilidade WGAG.
+- 🐳 **[Deploy Enterprise e Telemetria (Docker)](docs/infraestrutura_e_deploy.md)**: Otimização *Multi-stage Containerization* com orquestração centralizada no `docker-compose.yml`, aliada a Server Logging anonimizado (RGPD).
+
+---
+
+## 🚀 Como rodar com Docker (Ambiente Produção)
+
+Para executar ambas as micro-arquiteturas encapsuladas sem instalar dependências globais de Node:
+
+```bash
+# Sobe o frontend (porta 5173 transposta do 80) e backend (porta 3000)
+docker-compose up -d --build
+```
 - 🏗️ **[Arquitetura do Sistema e Fluxo de IA](./docs/arquitetura.md)**
   Dita a receita -> Fastify Shield -> Groq AI -> Cache -> UI.
 - 🔒 **[Segurança, Privacidade e LGPD/RGPD](./docs/seguranca_e_privacidade.md)**
   Explicação detalhada das barreiras de API, RLS e Eslint Security.
+- 📲 **[PWA e Performance (Offline Cache)](./docs/pwa_e_performance.md)**
+  Como o Service Worker é configurado, estratégias de cache e como testar a instalação.
+- 🔑 **[Autenticação e Controlo de Acesso (RBAC)](./docs/auth_e_rbac.md)**
+  Fluxo Google OAuth, validação JWT no Fastify middleware e como o RLS protege o histórico.
+- ⚖️ **[Resiliência e Controlo de Custos](./docs/resiliencia_e_custos.md)**
+  Explicação sobre Degradação Graciosa de Modelos IA e Streaming SSE, protegendo a faturação contra abusos.
 
 > **Regra Permanente do Projeto:** Todo o novo *feature-set* introduzido **obriga** a uma atualização coesiva no código, no diagrama de sequência e nesta documentação centralizada.
 
@@ -72,7 +102,15 @@ cp .env.example .env
 ```
 
 **3. Configure a Base de Dados (Supabase SQL Editor):**
-Execute o conteúdo do nosso ficheiro de migração inicial `backend/supabase/migrations/001_initial_schema.sql` diretamente no painel SQL do seu projeto Supabase para criar as tabelas `profiles` e `recipes_cache` com RLS ativo.
+Execute os ficheiros de migração por ordem no painel SQL do seu projeto Supabase:
+1. `backend/supabase/migrations/001_initial_schema.sql` — Cria tabelas `profiles` e `recipes_cache` com RLS ativo.
+2. `backend/supabase/migrations/002_user_history.sql` — Adiciona `user_id` ao `recipes_cache` e atualiza políticas RLS para histórico.
+
+**3.1. Configure o Google OAuth (Supabase Dashboard):**
+- No dashboard Supabase, vá a **Authentication → Providers → Google**.
+- Ative o provider e cole o `Client ID` e `Client Secret` obtidos na [Google Cloud Console](https://console.cloud.google.com/).
+- Adicione `https://<project-ref>.supabase.co/auth/v1/callback` como URL de redirect autorizado no Google.
+- Consulte o guia completo em [`docs/auth_e_rbac.md`](./docs/auth_e_rbac.md).
 
 **4. Configure o Frontend:**
 ```bash
@@ -94,6 +132,20 @@ cd frontend && npm run dev
 ```
 
 Acesse via browser em `http://localhost:5173`. O servidor Fastify responderá em `http://localhost:3001`.
+
+### Testar PWA (Build de Produção)
+
+A PWA (Service Worker + Manifest) só está ativa no build de produção:
+
+```bash
+cd frontend
+npm run build
+npm run preview
+```
+
+Aceda a `http://localhost:4173`. No Chrome, abra **DevTools → Application → Service Workers** para verificar que o SW está ativo. Para instalar a app, clique no ícone ⊕ na barra de endereço ou use o menu do browser → "Instalar FlashCook".
+
+Consulte o guia completo em [`docs/pwa_e_performance.md`](./docs/pwa_e_performance.md).
 
 ---
 

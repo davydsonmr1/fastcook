@@ -1,0 +1,60 @@
+name: FlashCook DevSecOps CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security-and-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Backend - Install Dependencies
+      run: npm ci
+      working-directory: ./backend
+
+    - name: Frontend - Install Dependencies
+      run: npm ci
+      working-directory: ./frontend
+
+    - name: Security Audit (Backend)
+      run: npm audit --audit-level=high
+      working-directory: ./backend
+      continue-on-error: true # Permite analisar logs mesmo com vulnerabilidades indiretas não críticas
+
+    - name: Security Audit (Frontend)
+      run: npm audit --audit-level=high
+      working-directory: ./frontend
+      continue-on-error: true
+
+    - name: Linter Check (Frontend)
+      run: npm run lint
+      working-directory: ./frontend
+
+    - name: Run Backend Security Tests
+      run: npm test
+      working-directory: ./backend
+      env:
+        # Variáveis mock para testes do backend não falharem por falta do .env
+        GROQ_API_KEY: mock-groq-key
+        SUPABASE_URL: http://mock-supabase-url
+        SUPABASE_SERVICE_ROLE_KEY: mock-supabase-key
+        PORT: 3001
+        HOST: 127.0.0.1
+        CORS_ORIGIN: '*'

@@ -1,8 +1,26 @@
-import { FastifyInstance, FastifyPluginAsync } from 'fastify';
+import { FastifyInstance, FastifyPluginAsync, FastifyRequest } from 'fastify';
 import { recipeBodySchema } from '../schemas/recipe.schema.js';
 import { generateRecipe } from '../services/groq.service.js';
 import { optionalAuth } from '../middlewares/auth.middleware.js';
 import { saveRecipeToHistory } from '../services/supabase.service.js';
+import { redisClient } from '../config/redis.js';
+
+interface RateLimitInfo {
+  current: number;
+  limit: number;
+  remaining: number;
+}
+
+// Função para normalizar ingredientes para Hash Cache (Lowercase e Ordem Alfabética)
+const normalizeIngredientsKey = (input: string) => {
+  return input
+    .toLowerCase()
+    .split(/[\s,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .sort()
+    .join('_');
+};
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
@@ -30,9 +48,32 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
 
       const { ingredients } = bodyValidation.data;
 
+      // 2. Cache Distribuído (Bypass completo do Rate Limit via Redis)
+      const cacheKey = `recipe:${normalizeIngredientsKey(ingredients)}`;
+      try {
+        const cachedRecipe = await redisClient.get(cacheKey);
+        
+        if (cachedRecipe) {
+           app.log.info({ type: 'CACHE_HIT', ingredients, msg: 'Receita servida instantaneamente do Redis Cache.' });
+           
+           void reply.header('Content-Type', 'text/event-stream');
+           void reply.header('Cache-Control', 'no-cache');
+           void reply.header('Connection', 'keep-alive');
+           
+           // Emular stream para compatibilidade com a UI atual
+           reply.raw.write(`data: ${JSON.stringify({ chunk: cachedRecipe })}\n\n`);
+           reply.raw.write('event: done\ndata: {}\n\n');
+           reply.raw.end();
+           return;
+        }
+      } catch (redisError) {
+         app.log.warn(redisError, 'Falha ao conectar com o Redis, servindo a request via Groq.');
+      }
+
       // Rate limit check for graceful degradation
       // O rateLimit foi configurado com continueExceeding: true
-      const rateLimitInfo = (request as any).rateLimit;
+      const reqWithRateLimit = request as FastifyRequest & { rateLimit?: RateLimitInfo };
+      const rateLimitInfo = reqWithRateLimit.rateLimit;
       const isRateLimited = rateLimitInfo ? rateLimitInfo.current > rateLimitInfo.limit : false;
 
       if (isRateLimited) {
@@ -68,7 +109,7 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
       // 5. Avaliação anti-injection post-processamento (Se Shield reagiu devolvendo error obj)
       try {
         const parsedFinalObj = JSON.parse(fullResponseMarkup || '{}') as Record<string, unknown>;
-        if (parsedFinalObj && 'error' in parsedFinalObj) {
+        if ('error' in parsedFinalObj) {
            app.log.warn({
              type: 'SECURITY_BLOCK_LLM',
              msg: 'Prompt Shield bloqueou uma tentativa maliciosa (jailbreak bypass).',
@@ -77,12 +118,20 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
            
            reply.raw.write(`data: ${JSON.stringify({ error: 'Unprocessable Entity', message: 'Input inválido detetado.' })}\n\n`);
            reply.raw.end();
-           return reply;
+           return;
         }
         
         // 6. Persistir no histórico se o utilizador estiver autenticado
         if (request.userId) {
           void saveRecipeToHistory(request.userId, ingredients, parsedFinalObj);
+        }
+        
+        // 7. Guardar Cache no Redis com TTL de 24 horas (86400 segundos)
+        try {
+          // A UI consome aos lotes (Pedaços JSON ou raw texto). Gravar string bruta que a UI juntaria
+          await redisClient.setex(cacheKey, 86400, fullResponseMarkup);
+        } catch (setCacheError) {
+          app.log.warn(setCacheError, 'Erro ao criar chave no Redis Cache');
         }
 
       } catch (parseError) {
@@ -102,7 +151,7 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
       reply.raw.end();
 
       // O reply.raw.end() finaliza, não retornamos um body comum via Fastify reply standard send()
-      return reply;
+      return;
 
     } catch (error) {
       app.log.error(error);
@@ -116,7 +165,7 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
       } else {
           reply.raw.write(`data: ${JSON.stringify({ error: 'Internal Server Error' })}\n\n`);
           reply.raw.end();
-          return reply;
+          return;
       }
     }
   });

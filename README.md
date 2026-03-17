@@ -148,5 +148,11 @@ Aceda a `http://localhost:4173`. No Chrome, abra **DevTools → Application → 
 Consulte o guia completo em [`docs/pwa_e_performance.md`](./docs/pwa_e_performance.md).
 
 ---
+## ✨ Autores e Agradecimentos
+
+Este projeto representa a evolução madura (Enterprise) da arquitetura *SimpleRecipe*, desenhada para suportar operação em produção real sob tráfego volumoso, mantendo robustez, segurança e otimização de custos.
+Mantido por **Davydson Rafael**.
+
+---
 
 <p align="center">Construído com extrema segurança, arquitetura limpa e performance instantânea. ⚡</p>

@@ -4,6 +4,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import sensible from '@fastify/sensible';
 import { env } from './config/env.js';
+import { redisClient } from './config/redis.js';
 import { recipeRoutes } from './routes/recipe.routes.js';
 
 export async function buildServer() {
@@ -30,6 +31,7 @@ export async function buildServer() {
   await app.register(rateLimit, {
     max: 5,
     timeWindow: '1 hour',
+    redis: redisClient,
     continueExceeding: true, // Permite que a rota decida o que fazer (ex: degradação graciosa de modelo)
     errorResponseBuilder: function () {
       return {

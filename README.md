@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/davydsonmr1/fastcook/main/frontend/public/vite.svg" alt="FlashCook Logo" width="120" />
+  <img src="https://raw.githubusercontent.com/davydsonmr1/fastcook/main/frontend/public/vite.svg" alt="FastCook Logo" width="120" />
 </p>
 
-<h1 align="center">FlashCook</h1>
-<p align="center"><strong>SimpleRecipe 2.0 — A PWA de receitas <i>Voice-First</i> gerida por Inteligência Artificial (Groq), focada em <i>Zero Waste</i> e construída sob perspetiva <i>DevSecOps</i>.</strong></p>
+<h1 align="center">FastCook</h1>
+<p align="center"><strong>A PWA de receitas <i>Voice-First</i> gerida por Inteligência Artificial (Groq), focada em <i>Zero Waste</i> e construída sob perspetiva <i>DevSecOps</i>.</strong></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/React%2019-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React 19" />
@@ -24,7 +24,7 @@
 
 ## 🚀 Sobre o Projeto
 
-O **FlashCook** é a evolução das aplicações de receitas. Não precisa de navegar por categorias infinitas ou blogs longos. Basta abrir a Web App e **ditar** o que tem no frigorífico. 
+O **FastCook** é a evolução das aplicações de receitas. Não precisa de navegar por categorias infinitas ou blogs longos. Basta abrir a Web App e **ditar** o que tem no frigorífico. 
 
 A Inteligência Artificial interpreta os seus ingredientes e o nosso Backend processa a receita ideal gerada quase instantaneamente, retornando a resposta em *Streaming*. Tudo isto num ambiente fortemente protegido contra injeções, abusos de API e fugas de dados, através de práticas rigorosas de **DevSecOps** e **LGPD/RGPD by design**.
 
@@ -44,7 +44,7 @@ A Inteligência Artificial interpreta os seus ingredientes e o nosso Backend pro
 
 ## 📚 Documentação Técnica (Docs as Code)
 
-Mergulhe na engenharia por trás do FlashCook. Mantemos documentação extensiva construída em Markdown com diagramas automáticos Mermaid:
+Mergulhe na engenharia por trás do FastCook. Mantemos documentação extensiva construída em Markdown com diagramas automáticos Mermaid:
 
 - 🏗️ **[Arquitetura do Sistema](docs/arquitetura.md)**: Explore a separação entre Edge (Service Worker), Backend Fastify e Cloud (Supabase/Groq).
 - 🧠 **[Engenharia Prompt Shield](docs/prompt_shield.md)**: Entenda como isolamos injeções contextuais no RAG/LLM.
@@ -143,14 +143,14 @@ npm run build
 npm run preview
 ```
 
-Aceda a `http://localhost:4173`. No Chrome, abra **DevTools → Application → Service Workers** para verificar que o SW está ativo. Para instalar a app, clique no ícone ⊕ na barra de endereço ou use o menu do browser → "Instalar FlashCook".
+Aceda a `http://localhost:4173`. No Chrome, abra **DevTools → Application → Service Workers** para verificar que o SW está ativo. Para instalar a app, clique no ícone ⊕ na barra de endereço ou use o menu do browser → "Instalar FastCook".
 
 Consulte o guia completo em [`docs/pwa_e_performance.md`](./docs/pwa_e_performance.md).
 
 ---
 ## ✨ Autores e Agradecimentos
 
-Este projeto representa a evolução madura (Enterprise) da arquitetura *SimpleRecipe*, desenhada para suportar operação em produção real sob tráfego volumoso, mantendo robustez, segurança e otimização de custos.
+Este projeto representa a evolução madura (Enterprise) da arquitetura original, desenhada para suportar operação em produção real sob tráfego volumoso, mantendo robustez, segurança e otimização de custos.
 Mantido por **Davydson Rafael**.
 
 ---

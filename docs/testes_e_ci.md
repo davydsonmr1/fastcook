@@ -1,6 +1,6 @@
 # Qualidade e Automação (CI/CD)
 
-O FlashCook reflete práticas modernas de *DevSecOps* e Acessibilidade (a11y), garantindo a longevidade, segurança e usabilidade da aplicação.
+O FastCook reflete práticas modernas de *DevSecOps* e Acessibilidade (a11y), garantindo a longevidade, segurança e usabilidade da aplicação.
 
 ## Integração Contínua (GitHub Actions)
 

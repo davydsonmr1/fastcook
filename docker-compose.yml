@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: flashcook_backend
+    container_name: fastcook_backend
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -18,7 +18,7 @@ services:
       - CORS_ORIGIN=http://localhost:5173
       - REDIS_URL=redis://redis:6379
     networks:
-      - flashcook_net
+      - fastcook_net
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health || exit 1"]
       interval: 30s
@@ -30,12 +30,12 @@ services:
 
   redis:
     image: redis:alpine
-    container_name: flashcook_redis
+    container_name: fastcook_redis
     restart: unless-stopped
     ports:
       - "6379:6379"
     networks:
-      - flashcook_net
+      - fastcook_net
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -48,16 +48,16 @@ services:
       dockerfile: Dockerfile
       # No Docker Compose mais recente, args podem absorver vars não declaradas se existirem no root .env ou no cli
       # Para builds que requerem ficheiros .env, é mais robusto passar no run point ou usar docker secrets
-    container_name: flashcook_frontend
+    container_name: fastcook_frontend
     restart: unless-stopped
     ports:
       - "5173:80"
     networks:
-      - flashcook_net
+      - fastcook_net
     depends_on:
       backend:
         condition: service_healthy
 
 networks:
-  flashcook_net:
+  fastcook_net:
     driver: bridge

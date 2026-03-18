@@ -1,6 +1,6 @@
 # Guia de Implantação Enterprise (AWS / DigitalOcean)
 
-Este guia cobre a passagem do `docker-compose.yml` local para uma infraestrutura na Cloud (Alta Disponibilidade) com Reverse Proxy SSL (Let's Encrypt). O FlashCook já está configurado para Multi-Stage Builds optimizadas em Alpine Linux (Zero-trust `nodeapp`).
+Este guia cobre a passagem do `docker-compose.yml` local para uma infraestrutura na Cloud (Alta Disponibilidade) com Reverse Proxy SSL (Let's Encrypt). O FastCook já está configurado para Multi-Stage Builds optimizadas em Alpine Linux (Zero-trust `nodeapp`).
 
 ## Pré-requisitos
 - Uma Instância Virtual Linux (ex: Ubuntu 24.04 na AWS EC2 ou DigitalOcean Droplet).
@@ -8,7 +8,7 @@ Este guia cobre a passagem do `docker-compose.yml` local para uma infraestrutura
 - Um Domínio apontado para o IP da Instância (ex: `app.flashcook.com`).
 
 ## 1. Preparação no Domínio e Servidor
-Aceda via SSH à sua máquina servidora Linux e clone o repositório do FlashCook:
+Aceda via SSH à sua máquina servidora Linux e clone o repositório do FastCook:
 ```bash
 git clone https://github.com/davydsonmr1/fastcook.git
 cd fastcook
@@ -26,7 +26,7 @@ GROQ_API_KEY=gsk_sua_chave_real
 SUPABASE_URL=https://abc.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=ey_chave_de_servico_secreta
 
-CORS_ORIGIN=https://app.flashcook.com
+CORS_ORIGIN=https://app.fastcook.com
 REDIS_URL=redis://redis:6379
 ```
 
@@ -49,7 +49,7 @@ sudo snap install --classic certbot
 Configure uma rule num servidor Nginx local da Máquina EC2 para despachar a porta `443` HTTPS para a porta exposta local do Frontend (`:80`).
 ```nginx
 server {
-    server_name app.flashcook.com;
+    server_name app.fastcook.com;
     
     location / {
         proxy_pass http://localhost:5173; # O mapeamento porta do Docker-Compose UI
@@ -69,4 +69,4 @@ server {
 }
 ```
 
-Rode `sudo certbot --nginx -d app.flashcook.com` e a Cloud do FlashCook estará online, segura e escalável, utilizando o *Redis* In-Memory para cache global sem congestionar o CPU.
+Rode `sudo certbot --nginx -d app.fastcook.com` e a Cloud do FastCook estará online, segura e escalável, utilizando o *Redis* In-Memory para cache global sem congestionar o CPU.

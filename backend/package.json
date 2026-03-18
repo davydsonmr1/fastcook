@@ -1,5 +1,5 @@
 {
-  "name": "flashcook-backend",
+  "name": "fastcook-backend",
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
@@ -12,13 +12,13 @@
     "lint:fix": "eslint src/**/*.ts --fix"
   },
   "keywords": [
-    "flashcook",
+    "fastcook",
     "fastify",
     "api"
   ],
   "author": "",
   "license": "ISC",
-  "description": "FlashCook API — Backend Fastify",
+  "description": "FastCook API — Backend Fastify",
   "dependencies": {
     "@fastify/cors": "^11.2.0",
     "@fastify/helmet": "^13.0.2",

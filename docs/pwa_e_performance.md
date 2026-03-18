@@ -1,6 +1,6 @@
-# PWA e Performance — FlashCook
+# PWA e Performance — FastCook
 
-O FlashCook é uma **Progressive Web App (PWA)** completa, permitindo instalação no dispositivo e acesso offline a receitas previamente consultadas.
+O FastCook é uma **Progressive Web App (PWA)** completa, permitindo instalação no dispositivo e acesso offline a receitas previamente consultadas.
 
 ---
 
@@ -28,8 +28,8 @@ O `manifest.webmanifest` é gerado automaticamente pelo plugin com as seguintes 
 
 ```json
 {
-  "name": "FlashCook — Receitas por Voz com IA",
-  "short_name": "FlashCook",
+  "name": "FastCook — Receitas por Voz com IA",
+  "short_name": "FastCook",
   "theme_color": "#ffffff",
   "background_color": "#f9fafb",
   "display": "standalone",
@@ -74,7 +74,7 @@ Aceda a `http://localhost:4173` no browser.
 
 ### 3.4. Instalar no Dispositivo
 
-- **Desktop (Chrome/Edge):** Clique no ícone de instalação na barra de endereço (⊕) ou no menu `...` → "Instalar FlashCook".
+- **Desktop (Chrome/Edge):** Clique no ícone de instalação na barra de endereço (⊕) ou no menu `...` → "Instalar FastCook".
 - **Mobile (Android/Chrome):** Aparecerá automaticamente um banner "Adicionar ao Ecrã Inicial" após dois acessos. Alternativamente, use o menu do browser → "Adicionar ao Ecrã Inicial".
 - **iOS (Safari):** Toque em "Partilhar" (⬆) → "Adicionar ao Ecrã Inicial".
 
@@ -98,7 +98,7 @@ Para uma experiência completa, coloque os seguintes ficheiros na pasta `fronten
 
 ```mermaid
 flowchart TD
-    A[Utilizador abre FlashCook] --> B{Service Worker ativo?}
+    A[Utilizador abre FastCook] --> B{Service Worker ativo?}
     B -- Sim --> C[App Shell servida do Precache]
     B -- Não --> D[Carrega normalmente da rede]
     

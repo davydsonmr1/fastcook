@@ -1,4 +1,4 @@
-import { Mic, Loader2, Info } from 'lucide-react';
+import { Mic, Loader2, Info, Send } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useSpeech } from './hooks/useSpeech';
 import { generateRecipe, ApiError } from './services/api';
@@ -16,7 +16,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<RecipeResponse | null>(null);
   const [partialRecipeText, setPartialRecipeText] = useState<string>('');
-  const [apiErrorMsg, setApiErrorMsg] = useState<string | null>(null);
+  const [textInput, setTextInput] = useState('');
   const [coldStartMsg, setColdStartMsg] = useState<string | null>(null);
 
   // Redireciona para Home se o utilizador fizer logout estando no Histórico
@@ -33,6 +33,7 @@ function App() {
     setResult(null);
     setPartialRecipeText('');
     setApiErrorMsg(null);
+    setTextInput('');
     setColdStartMsg(null);
     resetTranscript();
   };
@@ -46,6 +47,7 @@ function App() {
     setResult(null);
     setPartialRecipeText('');
     setShouldSubmit(false);
+    setTextInput(''); // Limpa o texto se o usar a voz
 
     if (isListening) {
       // Paragem manual pelo microfone
@@ -67,6 +69,12 @@ function App() {
       setShouldSubmit(false);
     }
   }, [isListening, transcript, shouldSubmit]);
+
+  const handleManualSubmit = () => {
+    if (textInput.length >= 3) {
+      void submitRecipe(textInput);
+    }
+  };
 
   const submitRecipe = async (ingredients: string) => {
     setIsLoading(true);
@@ -110,68 +118,96 @@ function App() {
           <div className="absolute top-0 w-full h-64 bg-gradient-to-b from-primary-50 to-transparent -z-10" />
 
           {/* Tagline */}
-          <header className="text-center mb-16 mt-8">
-            <p className="text-slate-500 max-w-sm mx-auto">
-              Dite os seus ingredientes e nós fazemos a magia acontecer. Zero desperdício.
+          <header className="text-center mb-16 mt-8 animate-fade-in-up">
+            <p className="text-slate-500 max-w-sm mx-auto font-medium">
+              Dite os seus ingredientes ou escreva-os, e nós fazemos a magia. Sem desperdícios.
             </p>
           </header>
 
           {/* Main Interaction Area */}
-          <section className="flex flex-col items-center w-full max-w-md">
+          <section className="flex flex-col items-center w-full max-w-md animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             
             {/* Microphone Button */}
-            <button
-              onClick={handleToggleListen}
-              disabled={isLoading}
-              className={`
-                relative flex items-center justify-center
-                w-32 h-32 rounded-full mb-8 transition-all duration-300 shadow-xl
-                ${isListening 
-                  ? 'bg-primary-500 text-white animate-pulse-fast ring-4 ring-primary-100 scale-105' 
-                  : 'bg-white text-slate-700 hover:bg-slate-50 hover:scale-105 ring-1 ring-slate-200'
-                }
-                ${isLoading ? 'opacity-50 cursor-not-allowed scale-95' : ''}
-              `}
-              aria-label={isListening ? "Parar de ouvir e enviar ingredientes" : "Pressione para falar os ingredientes"}
-              aria-pressed={isListening}
-            >
-              <Mic className={`w-12 h-12 ${isListening ? 'animate-bounce' : ''}`} aria-hidden="true" />
-              
-              {/* Ripple effect when listening */}
-              {isListening && (
-                <span className="absolute inset-0 rounded-full border-4 border-primary-500 opacity-20 animate-ping" />
-              )}
-            </button>
+            <div className={`relative ${isListening ? 'animate-float' : ''}`}>
+              <button
+                onClick={handleToggleListen}
+                disabled={isLoading}
+                className={`
+                  relative flex items-center justify-center z-10
+                  w-32 h-32 rounded-full mb-6 transition-all duration-500
+                  ${isListening 
+                    ? 'bg-primary-500 text-white animate-glow scale-105' 
+                    : 'bg-white text-slate-700 hover:bg-slate-50 hover:scale-105 shadow-xl ring-1 ring-slate-100 hover:ring-primary-100 hover:text-primary-600'
+                  }
+                  ${isLoading ? 'opacity-50 cursor-not-allowed scale-95 shadow-none' : ''}
+                `}
+                aria-label={isListening ? "Parar de ouvir e enviar ingredientes" : "Pressione para falar os ingredientes"}
+                aria-pressed={isListening}
+              >
+                <Mic className={`w-12 h-12 transition-transform duration-300 ${isListening ? 'scale-110 opacity-100' : 'opacity-80'}`} aria-hidden="true" />
+                
+                {/* Ripple effect when listening */}
+                {isListening && (
+                  <span className="absolute -inset-2 rounded-full border-2 border-primary-300 opacity-50 animate-ping pointer-events-none" />
+                )}
+              </button>
+            </div>
 
             {/* Temporary mock input button */}
             {isListening && (
                 <button 
                   onClick={() => { stopListening(); void submitRecipe('Cebola, alho, dois ovos e bife de atum'); }} 
-                  className="mb-4 text-xs font-semibold text-primary-600 uppercase tracking-wider"
+                  className="mb-4 text-[10px] font-bold text-primary-400 uppercase tracking-widest hover:text-primary-600 transition-colors"
                   aria-label="Simular uso da API enviando bife de atum"
                 >
-                   Simular API de Voz (Bife de atum)
+                   Testar API Mock (Bife atum)
                 </button>
             )}
 
-            {/* Transcript Area */}
-            <div 
-              className="w-full min-h-24 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-center text-center transition-all"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {isListening ? (
-                 transcript ? (
-                    <p className="text-slate-800 font-medium italic">"{transcript}"</p>
-                 ) : (
-                    <p className="text-slate-600 animate-pulse">A ouvir os seus ingredientes...</p>
-                 )
-              ) : transcript && !result && isLoading ? (
-                <p className="text-slate-800 font-medium">"{transcript}"</p>
-              ) : (
-                 <p className="text-slate-400">Toque no microfone para começar.</p>
-              )}
+            {/* Hybrid Text Input */}
+            <div className="w-full relative mb-8 group">
+              <input 
+                type="text" 
+                value={textInput}
+                onChange={(e) => {
+                  setTextInput(e.target.value);
+                  if (isListening) stopListening();
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
+                placeholder="Ou digite aqui (ex: frango, batata)..."
+                className="w-full rounded-2xl py-4 flex pl-5 pr-14 border-2 border-slate-100 focus:border-primary-400 focus:ring-4 focus:ring-primary-50 outline-none transition-all shadow-sm text-slate-800 font-medium placeholder-slate-400 bg-white/80 backdrop-blur-sm group-hover:border-primary-100"
+                disabled={isLoading}
+              />
+              <button 
+                onClick={handleManualSubmit}
+                disabled={isLoading || textInput.trim().length < 3}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl text-primary-500 hover:bg-primary-50 hover:text-primary-600 transition-all disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer"
+                aria-label="Enviar ingredientes digitados"
+              >
+                <Send className="w-5 h-5" />
+              </button>
             </div>
+
+            {/* Transcript Area */}
+            {(isListening || transcript) && (
+              <div 
+                className="w-full mb-6 bg-white/60 backdrop-blur-md rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-white/50 flex items-center justify-center text-center transition-all animate-fade-in-up"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {isListening ? (
+                   transcript ? (
+                      <p className="text-slate-800 font-medium italic text-lg text-balance">"{transcript}"</p>
+                   ) : (
+                      <p className="text-primary-600 font-medium animate-pulse">A escutar os ingredientes...</p>
+                   )
+                ) : transcript && !result && isLoading ? (
+                  <p className="text-slate-800 font-medium text-lg text-balance">"{transcript}"</p>
+                ) : (
+                   <p className="text-slate-400">Toque no microfone para começar.</p>
+                )}
+              </div>
+            )}
 
             {/* Unified Error State */}
             {displayError && !isLoading && (

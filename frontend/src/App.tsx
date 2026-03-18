@@ -16,8 +16,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<RecipeResponse | null>(null);
   const [partialRecipeText, setPartialRecipeText] = useState<string>('');
-  const [apiErrorMsg, setApiErrorMsg] = useState<string | null>(null);
   const [textInput, setTextInput] = useState('');
+  const [coldStartMsg, setColdStartMsg] = useState<string | null>(null);
 
   // Redireciona para Home se o utilizador fizer logout estando no Histórico
   useEffect(() => {
@@ -34,6 +34,7 @@ function App() {
     setPartialRecipeText('');
     setApiErrorMsg(null);
     setTextInput('');
+    setColdStartMsg(null);
     resetTranscript();
   };
 
@@ -83,9 +84,11 @@ function App() {
 
     try {
       // Chamada à nossa class wrapper `generateRecipe` com callback de stream incluído
-      const recipePayload = await generateRecipe(ingredients, (text) => {
-        setPartialRecipeText(text);
-      });
+      const recipePayload = await generateRecipe(
+        ingredients,
+        (text) => { setPartialRecipeText(text); },
+        (status) => { setColdStartMsg(status || null); },
+      );
       setResult(recipePayload);
       setPartialRecipeText('');
     } catch (err) {
@@ -220,7 +223,9 @@ function App() {
                 {(!partialRecipeText && !result && isLoading) && (
                   <div className="flex flex-col items-center text-primary-500 space-y-3 mb-8">
                      <Loader2 className="w-8 h-8 animate-spin" />
-                     <p className="text-sm font-medium animate-pulse">A preparar os ingredientes...</p>
+                     <p className="text-sm font-medium animate-pulse">
+                       {coldStartMsg || 'A preparar os ingredientes...'}
+                     </p>
                   </div>
                 )}
                 

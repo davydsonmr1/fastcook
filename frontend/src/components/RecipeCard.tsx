@@ -86,9 +86,9 @@ export function RecipeCard({ recipe, partialText, onClear, isStreaming }: Recipe
   const difficulty = difficultyConfig[displayRecipe.difficulty || 3] ?? difficultyConfig[3];
 
   return (
-    <article className={`animate-fade-in-up w-full bg-white rounded-3xl shadow-lg border-2 ${isStreaming ? 'border-primary-300 shadow-primary-100/50' : 'border-slate-100'} overflow-hidden transition-all duration-500`}>
+    <article className={`animate-fade-in-up hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary-100/60 w-full bg-white rounded-3xl shadow-lg border-2 ${isStreaming ? 'border-primary-300 shadow-primary-200/50' : 'border-slate-50 hover:border-primary-100'} overflow-hidden transition-all duration-500`}>
       {/* Header */}
-      <div className={`px-6 py-5 flex items-start justify-between gap-4 transition-colors duration-500 ${isStreaming ? 'bg-gradient-to-r from-primary-400 to-primary-500 animate-pulse' : 'bg-gradient-to-r from-primary-500 to-primary-600'}`}>
+      <div className={`px-6 py-6 flex items-start justify-between gap-4 transition-colors duration-500 ${isStreaming ? 'bg-gradient-to-r from-primary-400 to-primary-500 animate-pulse' : 'bg-gradient-to-r from-primary-500 via-primary-600 to-primary-500'}`}>
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm">
             <ChefHat className={`w-5 h-5 text-white ${isStreaming ? 'animate-bounce' : ''}`} />
@@ -136,7 +136,7 @@ export function RecipeCard({ recipe, partialText, onClear, isStreaming }: Recipe
           )}
           {displayRecipe.steps?.map((step, index) => (
             <li key={index} className="flex gap-3 items-start animate-fade-in-up">
-              <span className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-50 text-primary-600 text-xs font-bold transition-transform hover:scale-110">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-gold-500/10 text-gold-500 ring-1 ring-gold-500/30 text-xs font-bold transition-transform hover:scale-110">
                 {index + 1}
               </span>
               <p className="text-sm text-slate-700 leading-relaxed pt-0.5">{step}</p>
@@ -163,7 +163,7 @@ export function RecipeCard({ recipe, partialText, onClear, isStreaming }: Recipe
           <button
             onClick={onClear}
             aria-label="Começar uma nova receita"
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 transition-colors shadow-md hover:shadow-lg hover:-translate-y-0.5"
           >
             <ChefHat className="w-4 h-4" aria-hidden="true" />
             Nova Receita

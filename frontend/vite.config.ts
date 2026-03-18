@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'FlashCook — Receitas por Voz com IA',
-        short_name: 'FlashCook',
+        name: 'FastCook — Receitas por Voz com IA',
+        short_name: 'FastCook',
         description: 'Dite os seus ingredientes e receba receitas instantâneas geradas por Inteligência Artificial.',
         theme_color: '#ffffff',
         background_color: '#f9fafb',

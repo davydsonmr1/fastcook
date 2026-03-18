@@ -1,6 +1,6 @@
-# Arquitetura do Sistema — FlashCook
+# Arquitetura do Sistema — FastCook
 
-O FlashCook (SimpleRecipe 2.0) emprega uma arquitetura moderna, com clara separação entre cliente e servidor para garantir segurança máxima (DevSecOps) e conformidade com privacidade desde a conceção.
+O FastCook emprega uma arquitetura moderna, com clara separação entre cliente e servidor para garantir segurança máxima (DevSecOps) e conformidade com privacidade desde a conceção.
 
 ## Diagrama de Sequência (Fluxo Principal)
 
@@ -30,8 +30,8 @@ sequenceDiagram
     note over Frontend: JWT armazenado pelo Supabase SDK.<br/>Enviado como Bearer Token em todas as chamadas API.
 
     %% Passo 1: Captura
-    Utilizador->>Frontend: Dita a receita ("Quero um bolo com 2 ovos e farinha")
-    note over Frontend: Web Speech API (useSpeech) transcreve áudio para texto em tempo real.<br/>Áudio NÃO sai do browser (LGPD).
+    Utilizador->>Frontend: Dita ("Quero um bolo...") ou Digita ingredientes
+    note over Frontend: Web Speech API transcreve áudio em caso de voz.<br/>Tanto texto digitado quanto voz usam o mesmo canal híbrido.
     
     %% Passo 2: Request Seguro (via SW)
     Frontend->>SW: POST /api/v1/recipes + Bearer Token (Texto Higienizado)

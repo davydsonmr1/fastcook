@@ -1,30 +1,53 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary-50: #fef2f2;
-  --color-primary-100: #fee2e2;
-  --color-primary-500: #ef4444;
-  --color-primary-600: #dc2626;
+  --color-primary-50: #fff1e6;
+  --color-primary-100: #fce1d2;
+  --color-primary-200: #f7bda1;
+  --color-primary-300: #f0956d;
+  --color-primary-400: #e07a5f;
+  --color-primary-500: #c95c47;
+  --color-primary-600: #a74938;
+  
+  --color-sage-50: #f4f6f5;
+  --color-sage-100: #e4ebe9;
+  --color-sage-500: #81b29a;
+  --color-sage-600: #66937d;
+  
+  --color-gold-500: #dca246;
   
   --color-surface: #ffffff;
-  --color-background: #f9fafb;
+  --color-background: #faf9f6;
 }
 
 /* Custom Tailwind Config for animations */
 @theme {
   --animate-pulse-fast: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-fade-in-up: fade-in-up 0.5s ease-out both;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-glow: glow 2s ease-in-out infinite alternate;
 }
 
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 10px -2px rgba(201,92,71,0.4); }
+  to { box-shadow: 0 0 25px 5px rgba(201,92,71,0.8); }
 }
 
 @layer base {

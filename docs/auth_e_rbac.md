@@ -1,4 +1,4 @@
-# Autenticação e Controlo de Acesso (RBAC) — FlashCook
+# Autenticação e Controlo de Acesso (RBAC) — FastCook
 
 Este documento detalha o fluxo de autenticação com Google OAuth via Supabase, a validação de JWT no Backend (Fastify), e como o Row Level Security (RLS) protege o histórico de receitas de cada utilizador.
 
@@ -6,7 +6,7 @@ Este documento detalha o fluxo de autenticação com Google OAuth via Supabase, 
 
 ## 1. Fluxo de Login com Google (OAuth 2.0)
 
-O FlashCook utiliza o **Supabase Auth** como provedor de identidade, configurado com o **Google OAuth**.
+O FastCook utiliza o **Supabase Auth** como provedor de identidade, configurado com o **Google OAuth**.
 
 ```mermaid
 sequenceDiagram
@@ -102,7 +102,7 @@ https://wa.me/?text=<TEXTO_CODIFICADO>
 - **Zero IDs expostos:** Nenhum UUID de base de dados, `query_hash`, ou token é incluído no texto partilhado.
 - **Apenas conteúdo:** Nome da receita, tempo, dificuldade e passos — informação pública e não sensível.
 - **`encodeURIComponent`:** Previne injeção de parâmetros na URL.
-- **`noopener,noreferrer`:** O `window.open` não permite à página de destino aceder ao `window.opener` do FlashCook.
+- **`noopener,noreferrer`:** O `window.open` não permite à página de destino aceder ao `window.opener` do FastCook.
 
 ---
 

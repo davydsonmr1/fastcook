@@ -4,7 +4,7 @@ Este documento dita como a iniciativa DevSecOps foi consolidada no nível de Inf
 
 ## Setup Dockerizado
 
-O **FlashCook** dispõe de orquestração via *Docker Compose* para unificar dependências. Ao correr no ambiente Enterprise, usamos um mecanismo de Containerização *multi-stage builds*.
+O **FastCook** dispõe de orquestração via *Docker Compose* para unificar dependências. Ao correr no ambiente Enterprise, usamos um mecanismo de Containerização *multi-stage builds*.
 
 ### Backend (Node.js)
 O backend usa a imagem `node:22-alpine`, instalando as dependências `npm ci` num estágio, e reciclando apenas a pasta compilada `dist/` noutro estágio sem privilégios *Root* (user: `nodeapp`).

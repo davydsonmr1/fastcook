@@ -1,6 +1,6 @@
 # Segurança e Privacidade (LGPD/RGPD)
 
-O FlashCook adota a perspetiva **DevSecOps** desde o dia zero. A segurança não é uma reflexão tardia, mas um pilar da fundação do sistema.
+O FastCook adota a perspetiva **DevSecOps** desde o dia zero. A segurança não é uma reflexão tardia, mas um pilar da fundação do sistema.
 
 ## 1. Gestão Rigorosa de Segredos
 Existe um **air-gap completo** entre as chaves de infraestrutura e o cliente:
@@ -20,9 +20,9 @@ O tráfego de mensagens textuais (originado da voz do utilizador) com destino ao
 
 ## 4. Conformidade Privacidade (LGPD / RGPD)
 O projeto aborda a privacidade *by design*:
-1. **Dados de Voz Transitórios:** Todo o fluxo inicial do FlashCook usa a Web Speech API (`SpeechRecognition`). O reconhecimento ocorre preferencialmente localmente ou via servidores nativos da Apple/Google do smartphone, e apenas envia *Texto* anonimizado para a nossa API Fastify. **Não arquivamos ficheiros de áudio**.
+1. **Dados de Voz Transitórios:** Todo o fluxo inicial do FastCook usa a Web Speech API (`SpeechRecognition`). O reconhecimento ocorre preferencialmente localmente ou via servidores nativos da Apple/Google do smartphone, e apenas envia *Texto* anonimizado para a nossa API Fastify. **Não arquivamos ficheiros de áudio**.
 2. **Isolamento de Log:** Todos os acessos backend logados por `Pino`, abstêm-se de logar senhas, tokens JWT integrais ou IPs sem pseudo-anonimização.
-3. **Direito a Atualizar / Eliminar:** A infraestrutura de schema prevê cascatas (`ON DELETE CASCADE`). Quando um utilizador do FlashCook elimina a conta através do Google/Supabase Auth, todo e qualquer dado pessoal (`profiles.email`, `display_name`) é sumariamente apagado do sistema instantaneamente.
+3. **Direito a Atualizar / Eliminar:** A infraestrutura de schema prevê cascatas (`ON DELETE CASCADE`). Quando um utilizador do FastCook elimina a conta através do Google/Supabase Auth, todo e qualquer dado pessoal (`profiles.email`, `display_name`) é sumariamente apagado do sistema instantaneamente.
 
 ## 5. Security Linting
 Utilizamos o pacote `eslint-plugin-security` de forma rotineira no workflow de backend. Ele previne que desenvolvedores inadvertidamente introduzam código letal no repósitorio como o uso de Regex suscetível a Denial of Service (*ReDoS*), Path Traversals vulgares, ou utilização de algoritmos Pseudo Aleatórios não seguros (`crypto.randomBytes`).

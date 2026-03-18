@@ -50,6 +50,11 @@ export async function buildServer() {
         cb(null, true);
         return;
       }
+      // Permite todos os subdomínios Vercel (*.vercel.app) — deploy previews e produção
+      if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin)) {
+        cb(null, true);
+        return;
+      }
       app.log.warn({ type: 'CORS_BLOCKED', origin }, 'Origem bloqueada por CORS');
       cb(new Error('Não permitido por CORS: ' + origin), false);
     },
@@ -88,8 +93,14 @@ async function start() {
   const app = await buildServer();
 
   try {
-    await app.listen({ port: env.PORT, host: '0.0.0.0' });
-    app.log.info(`🚀 FlashCook API running on 0.0.0.0:${env.PORT.toString()} (env.HOST=${env.HOST})`);
+    // Render injeta PORT dinamicamente. z.coerce.number() converte string vazia em 0,
+    // por isso lemos process.env.PORT diretamente e só usamos env.PORT como fallback seguro.
+    const port = (process.env.PORT && Number(process.env.PORT) > 0)
+      ? Number(process.env.PORT)
+      : (env.PORT > 0 ? env.PORT : 3000);
+
+    await app.listen({ port, host: '0.0.0.0' });
+    app.log.info(`🚀 FlashCook API running on 0.0.0.0:${port}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

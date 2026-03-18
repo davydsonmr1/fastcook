@@ -16,6 +16,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<RecipeResponse | null>(null);
   const [partialRecipeText, setPartialRecipeText] = useState<string>('');
+  const [apiErrorMsg, setApiErrorMsg] = useState<string | null>(null);
   const [textInput, setTextInput] = useState('');
   const [coldStartMsg, setColdStartMsg] = useState<string | null>(null);
 

@@ -5,12 +5,14 @@ import { generateRecipe, ApiError } from './services/api';
 import type { RecipeResponse } from './services/api';
 import { RecipeCard } from './components/RecipeCard';
 import { Header } from './components/Header';
-import { History } from './pages/History';
+import { Profile } from './pages/Profile';
 import { useAuth } from './contexts/AuthContext';
+import { LoginModal } from './components/LoginModal';
 
 function App() {
   const { user } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'history'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'profile'>('home');
+  const [isLoginModalOpen, setLoginModalOpen] = useState(false);
   const { isListening, transcript, error: speechError, startListening, stopListening, resetTranscript } = useSpeech(() => setShouldSubmit(true));
   
   const [isLoading, setIsLoading] = useState(false);
@@ -20,9 +22,9 @@ function App() {
   const [textInput, setTextInput] = useState('');
   const [coldStartMsg, setColdStartMsg] = useState<string | null>(null);
 
-  // Redireciona para Home se o utilizador fizer logout estando no Histórico
+  // Redireciona para Home se o utilizador fizer logout estando no Perfil
   useEffect(() => {
-    if (!user && currentView === 'history') {
+    if (!user && currentView === 'profile') {
       setCurrentView('home');
     }
   }, [user, currentView]);
@@ -105,12 +107,18 @@ function App() {
 
   return (
     <>
-      <Header currentView={currentView} onViewChange={setCurrentView} />
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      
+      <Header 
+        currentView={currentView} 
+        onViewChange={setCurrentView} 
+        onLoginClick={() => setLoginModalOpen(true)}
+      />
 
-      {currentView === 'history' && user ? (
+      {currentView === 'profile' && user ? (
         <main className="min-h-screen w-full flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
           <div className="absolute top-0 w-full h-64 bg-gradient-to-b from-primary-50 to-transparent -z-10" />
-          <History />
+          <Profile />
         </main>
       ) : (
         <main className="min-h-screen w-full flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">

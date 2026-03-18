@@ -1,13 +1,22 @@
-import { LogIn, LogOut, History, ChefHat } from 'lucide-react';
+import { LogIn, User as UserIcon, ChefHat } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
-  currentView: 'home' | 'history';
-  onViewChange: (view: 'home' | 'history') => void;
+  currentView: 'home' | 'profile';
+  onViewChange: (view: 'home' | 'profile') => void;
+  onLoginClick: () => void;
 }
 
-export function Header({ currentView, onViewChange }: HeaderProps) {
-  const { user, isLoading, signInWithGoogle, signOut } = useAuth();
+export function Header({ currentView, onViewChange, onLoginClick }: HeaderProps) {
+  const { user, isLoading } = useAuth();
+
+  const handleProfileClick = () => {
+    if (user) {
+      onViewChange('profile');
+    } else {
+      onLoginClick();
+    }
+  };
 
   return (
     <nav className="w-full bg-white/80 backdrop-blur-sm border-b border-slate-100 sticky top-0 z-50">
@@ -35,19 +44,17 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
           >
             Início
           </button>
-          {user && (
-            <button
-              onClick={() => onViewChange('history')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                currentView === 'history'
-                  ? 'bg-primary-50 text-primary-600'
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <History className="w-4 h-4" />
-              Histórico
-            </button>
-          )}
+          <button
+            onClick={handleProfileClick}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              currentView === 'profile'
+                ? 'bg-primary-50 text-primary-600'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <UserIcon className="w-4 h-4" />
+            Perfil
+          </button>
         </div>
 
         {/* Auth Button */}
@@ -56,29 +63,30 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
             <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse" />
           ) : user ? (
             <div className="flex items-center gap-3">
-              {user.user_metadata?.avatar_url && (
+              {user.user_metadata?.avatar_url ? (
                 <img
                   src={user.user_metadata.avatar_url as string}
                   alt={user.user_metadata?.full_name as string ?? 'Avatar'}
-                  className="w-8 h-8 rounded-full ring-2 ring-slate-100"
+                  className="w-8 h-8 rounded-full ring-2 ring-slate-100 cursor-pointer hover:ring-primary-100 transition-all"
                   referrerPolicy="no-referrer"
+                  onClick={handleProfileClick}
                 />
+              ) : (
+                <div 
+                  onClick={handleProfileClick}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold cursor-pointer hover:ring-2 hover:ring-primary-100 transition-all"
+                >
+                  {user.email?.charAt(0).toUpperCase()}
+                </div>
               )}
-              <button
-                onClick={() => void signOut()}
-                className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
-                title="Terminar sessão"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
             </div>
           ) : (
             <button
-              onClick={() => void signInWithGoogle()}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+              onClick={onLoginClick}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"
             >
               <LogIn className="w-4 h-4" />
-              <span className="hidden sm:inline">Entrar com Google</span>
+              <span className="hidden sm:inline">Identifique-se</span>
               <span className="sm:hidden">Entrar</span>
             </button>
           )}

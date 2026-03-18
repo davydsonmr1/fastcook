@@ -33,8 +33,8 @@ A Inteligência Artificial interpreta os seus ingredientes e o nosso Backend pro
 - 🎙️ **Voice-First Experience**: Diga o que tem. Web Speech API converte a fala sem armazenar áudio (LGPD).
 - ♻️ **Zero Waste (Desperdício Zero)**: A IA do Groq prioriza receitas que utilizam *exclusivamente* o que você ditou.
 - ⚡ **Real-time AI Streaming (SSE)**: Interface reativa com efeito de escrita em tempo real, baseada em Server-Sent Events. Sem barras de "loading" infinitas.
-- � **PWA Instalável & Offline**: Instale no telemóvel como uma app nativa. Receitas já consultadas ficam disponíveis sem ligação à internet graças ao Service Worker (Workbox).- 🔐 **Login com Google**: Autenticação via Google OAuth (Supabase Auth). Quando logado, as receitas geradas ficam guardadas no seu histórico pessoal protegido por RLS.
-- 📋 **Histórico de Receitas**: Consulte todas as suas receitas passadas. Os dados são isolados por utilizador — ninguém vê as suas receitas.
+- � **PWA Instalável & Offline**: Instale no telemóvel como uma app nativa. Receitas já consultadas ficam disponíveis sem ligação à internet graças ao Service Worker (Workbox).- 🔐 **Login com Google & Perfil**: Autenticação via Google OAuth com um elegante Modal de Login *Mobile-First*. Nova aba de perfil dedicada para gerir a sua sessão e consultar dados guardados. Guarde receitas geradas no seu histórico pessoal protegido por RLS.
+- 📋 **Histórico de Receitas**: Consulte todas as suas receitas passadas integradas diretamente no seu Perfil. Os dados são isolados por utilizador — ninguém vê as suas receitas.
 - 📤 **Partilha no WhatsApp**: Partilhe receitas com amigos num formato limpo (texto puro, sem IDs de base de dados expostos).- �🛡️ **Segurança by Design**:
   - *Row Level Security (RLS)* no Supabase: Cada utilizador isolado.
   - *Validação Extrema (Zod)*: Rejeição imediata via Regex de carateres perigosos (`{}`, `<>`, `[]`).
@@ -110,7 +110,8 @@ Execute os ficheiros de migração por ordem no painel SQL do seu projeto Supaba
 - No dashboard Supabase, vá a **Authentication → Providers → Google**.
 - Ative o provider e cole o `Client ID` e `Client Secret` obtidos na [Google Cloud Console](https://console.cloud.google.com/).
 - Adicione `https://<project-ref>.supabase.co/auth/v1/callback` como URL de redirect autorizado no Google.
-- Consulte o guia completo em [`docs/auth_e_rbac.md`](./docs/auth_e_rbac.md).
+- Consulte o guia completo do fluxo e arquitetura RLS em [`docs/auth_e_rbac.md`](./docs/auth_e_rbac.md).
+- Para a checklist *passo-a-passo* de configuração da API Google no console e URIs de redirecionamento, consulte [`docs/configuracao_google_oauth.md`](./docs/configuracao_google_oauth.md).
 
 **4. Configure o Frontend:**
 ```bash

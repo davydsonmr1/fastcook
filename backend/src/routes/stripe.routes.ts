@@ -41,12 +41,12 @@ export const stripeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
         line_items: [
           {
             price_data: {
-              currency: 'eur',
+              currency: 'brl',
               product_data: {
                 name: 'Chef Premium - FastCook',
                 description: 'Acesso Pessoal ao Llama 70B, Geração de Imagem Rápida e Despensa Limitless.',
               },
-              unit_amount: 499, // 4.99 EUR / Mês
+              unit_amount: 100, // 1.00 BRL
               recurring: { interval: 'month' },
             },
             quantity: 1,

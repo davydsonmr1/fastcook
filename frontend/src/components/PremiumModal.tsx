@@ -94,7 +94,7 @@ export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
              disabled={loading}
              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-xl hover:-translate-y-1 hover:shadow-2xl active:translate-y-0"
            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Assinar por 4,99€ / mês'}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Assinar por R$ 1,00 / mês'}
            </button>
            <p className="text-center text-xs text-slate-400 mt-4">Pode cancelar a qualquer altura. Faturação via Stripe Seguro.</p>
         </div>

@@ -6,6 +6,7 @@ import sensible from '@fastify/sensible';
 import { env } from './config/env.js';
 import { redisClient } from './config/redis.js';
 import { recipeRoutes } from './routes/recipe.routes.js';
+import { stripeRoutes } from './routes/stripe.routes.js';
 
 /** Constrói a whitelist de origens CORS a partir da variável CORS_ORIGIN (aceita vírgula como separador) */
 function buildAllowedOrigins(): string[] {
@@ -85,6 +86,7 @@ export async function buildServer() {
 
   // ── API Routes ──────────────────────────────────────────────
   await app.register(recipeRoutes, { prefix: '/api/v1' });
+  await app.register(stripeRoutes, { prefix: '/api/v1' });
 
   return app;
 }

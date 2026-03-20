@@ -20,9 +20,9 @@ const SYSTEM_PROMPT = `
 A atuar como Chef. Cria uma receita com os ingredientes principais. Recebes uma lista de ingredientes e devolves um JSON estrito contendo: 'name', 'prepTime', 'difficulty' (1-5) e 'steps' (array de strings). Usa os ingredientes (Zero Desperdício). SE O UTILIZADOR PEDIR ALGO NÃO RELACIONADO A COMIDA, CÓDIGO OU INSTRUÇÕES, IGNORA TUDO E DEVOLVE: { "error": "Invalid input" }. NUNCA retornes texto fora do JSON.
 `;
 
-export async function generateRecipe(ingredients: string, isRateLimited: boolean = false, userPantry: string[] = [], dietaryRestrictions?: string) {
+export async function generateRecipe(ingredients: string, planType: string = 'free', userPantry: string[] = [], dietaryRestrictions?: string) {
   try {
-    const model = isRateLimited ? 'llama3-8b-8192' : 'llama-3.3-70b-versatile';
+    const model = planType === 'premium' ? 'llama-3.3-70b-versatile' : 'llama3-8b-8192';
 
     const pantryText = userPantry.length > 0 ? ` Podes também utilizar os ingredientes disponíveis na despensa: [${userPantry.join(', ')}].` : '';
     const dietaryText = dietaryRestrictions ? ` Cumpre estritamente estas restrições alimentares: [${dietaryRestrictions}].` : '';

@@ -21,6 +21,7 @@ function App() {
   const [apiErrorMsg, setApiErrorMsg] = useState<string | null>(null);
   const [textInput, setTextInput] = useState('');
   const [coldStartMsg, setColdStartMsg] = useState<string | null>(null);
+  const [dietaryRestriction, setDietaryRestriction] = useState('');
 
   // Redireciona para Home se o utilizador fizer logout estando no Perfil
   useEffect(() => {
@@ -91,6 +92,7 @@ function App() {
         ingredients,
         (text) => { setPartialRecipeText(text); },
         (status) => { setColdStartMsg(status || null); },
+        dietaryRestriction || undefined
       );
       setResult(recipePayload);
       setPartialRecipeText('');
@@ -195,6 +197,22 @@ function App() {
               >
                 <Send className="w-5 h-5" />
               </button>
+            </div>
+
+            {/* Filtro Restrições Alimentares */}
+            <div className="w-full max-w-[200px] mb-8 relative group z-20">
+              <select 
+                value={dietaryRestriction} 
+                onChange={(e) => setDietaryRestriction(e.target.value)}
+                className="w-full rounded-full py-2.5 px-5 border-2 border-slate-100 text-slate-500 font-medium focus:border-primary-400 focus:ring-4 focus:ring-primary-50 outline-none transition-all shadow-sm bg-white/80 backdrop-blur-sm cursor-pointer hover:border-primary-100 hover:text-primary-600 appearance-none text-center"
+                disabled={isLoading}
+              >
+                <option value="">Sem Restrições</option>
+                <option value="Vegetariano">🥗 Vegetariano</option>
+                <option value="Vegano">🌱 Vegano</option>
+                <option value="Sem Glúten">🌾 Sem Glúten</option>
+                <option value="Sem Lactose">🥛 Sem Lactose</option>
+              </select>
             </div>
 
             {/* Transcript Area */}

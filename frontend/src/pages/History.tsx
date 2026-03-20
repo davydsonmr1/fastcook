@@ -7,6 +7,7 @@ import type { RecipeResponse } from '../services/api';
 interface HistoryEntry {
   id: string;
   response_data: RecipeResponse;
+  is_favorite: boolean;
   created_at: string;
 }
 
@@ -18,7 +19,7 @@ export function History() {
     async function fetchHistory() {
       const { data, error } = await supabase
         .from('recipes_cache')
-        .select('id, response_data, created_at')
+        .select('id, response_data, is_favorite, created_at')
         .order('created_at', { ascending: false });
 
       if (!error && data) {
@@ -48,23 +49,49 @@ export function History() {
     );
   }
 
+  const handleToggleFavorite = async (id: string, currentStatus: boolean) => {
+    // Optimistic toggle
+    setRecipes((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, is_favorite: !currentStatus } : r))
+    );
+
+    const { error } = await supabase
+      .from('recipes_cache')
+      .update({ is_favorite: !currentStatus })
+      .eq('id', id);
+
+    if (error) {
+      // Revert mapping
+      setRecipes((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, is_favorite: currentStatus } : r))
+      );
+    }
+  };
+
   return (
-    <section className="w-full max-w-md mx-auto space-y-6 mt-8">
-      <h2 className="text-lg font-bold text-slate-900">Meu Histórico</h2>
-      {recipes.map((entry) => (
-        <div key={entry.id}>
-          <p className="text-xs text-slate-400 mb-2">
-            {new Date(entry.created_at).toLocaleDateString('pt-PT', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </p>
-          <RecipeCard recipe={entry.response_data} />
-        </div>
-      ))}
+    <section className="w-full mx-auto mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {recipes.map((entry) => (
+          <div key={entry.id} className="flex flex-col h-full">
+            <p className="text-xs text-slate-400 mb-2 font-medium">
+              {new Date(entry.created_at).toLocaleDateString('pt-PT', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+            <div className="flex-1">
+              <RecipeCard 
+                recipe={entry.response_data} 
+                isFavorite={entry.is_favorite}
+                onToggleFavorite={() => void handleToggleFavorite(entry.id, entry.is_favorite)}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

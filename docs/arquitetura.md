@@ -30,7 +30,7 @@ sequenceDiagram
     note over Frontend: JWT armazenado pelo Supabase SDK.<br/>Enviado como Bearer Token em todas as chamadas API.
 
     %% Passo 1: Captura
-    Utilizador->>Frontend: Dita ("Quero um bolo...") ou Digita ingredientes
+    Utilizador->>Frontend: Dita ("Quero um bolo...") ou Digita ingredientes e seleciona Restrições Alimentares
     note over Frontend: Web Speech API transcreve áudio em caso de voz.<br/>Tanto texto digitado quanto voz usam o mesmo canal híbrido.
     
     %% Passo 2: Request Seguro (via SW)
@@ -43,7 +43,8 @@ sequenceDiagram
     Backend->>Redis: 🛡️ Incrementa contador Rate Limit
     Backend->>Backend: 🔑 Auth Middleware (Valida JWT via supabaseAdmin.auth.getUser)
     Backend->>Backend: 🛡️ Validação Zod (Bloqueia injeções '<>' '[]' '{}')
-    Backend->>Backend: 🛡️ Prompt Shield (Sanitiza instruções ao LLM)
+    Backend->>Supabase: 📦 (Se Válido) Query "user_pantry" para buscar despensa inteligente
+    Backend->>Backend: 🛡️ Prompt Shield (Sanitiza e injeta Restrições + Despensa no LLM)
     
     %% Passo 4: Verificação de Cache Distribuído
     Backend->>Redis: Verifica Cache Hit (GET recipe:{ingredientes})

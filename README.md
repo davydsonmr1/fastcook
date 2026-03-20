@@ -32,6 +32,9 @@ A Inteligência Artificial interpreta os seus ingredientes e o nosso Backend pro
 
 - 🎙️ **Voice-First Experience**: Diga o que tem. Web Speech API converte a fala sem armazenar áudio (LGPD).
 - ♻️ **Zero Waste (Desperdício Zero)**: A IA do Groq prioriza receitas que utilizam *exclusivamente* o que você ditou.
+- 🥫 **Despensa Inteligente**: Guarde ingredientes base no seu perfil (sal, azeite). A IA os considera automaticamente.
+- 🥗 **Restrições Alimentares**: O utilizador pode selecionar opções (Vegano, Sem Glúten, etc.) antes da geração.
+- ❤️ **Favoritos**: Guarde (com o ícone de coração) e consulte as suas receitas favoritas de forma dinâmica no Histórico.
 - ⚡ **Real-time AI Streaming (SSE)**: Interface reativa com efeito de escrita em tempo real, baseada em Server-Sent Events. Sem barras de "loading" infinitas.
 - � **PWA Instalável & Offline**: Instale no telemóvel como uma app nativa. Receitas já consultadas ficam disponíveis sem ligação à internet graças ao Service Worker (Workbox).- 🔐 **Login com Google & Perfil**: Autenticação via Google OAuth com um elegante Modal de Login *Mobile-First*. Nova aba de perfil dedicada para gerir a sua sessão e consultar dados guardados. Guarde receitas geradas no seu histórico pessoal protegido por RLS.
 - 📋 **Histórico de Receitas**: Consulte todas as suas receitas passadas integradas diretamente no seu Perfil. Os dados são isolados por utilizador — ninguém vê as suas receitas.

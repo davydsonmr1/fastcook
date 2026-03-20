@@ -1,13 +1,16 @@
-import { LogIn, User as UserIcon, ChefHat } from 'lucide-react';
+import { LogIn, User as UserIcon, ChefHat, Compass, Crown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
+export type ViewType = 'home' | 'profile' | 'explore';
+
 interface HeaderProps {
-  currentView: 'home' | 'profile';
-  onViewChange: (view: 'home' | 'profile') => void;
+  currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
   onLoginClick: () => void;
+  onPremiumClick: () => void;
 }
 
-export function Header({ currentView, onViewChange, onLoginClick }: HeaderProps) {
+export function Header({ currentView, onViewChange, onLoginClick, onPremiumClick }: HeaderProps) {
   const { user, isLoading } = useAuth();
 
   const handleProfileClick = () => {
@@ -27,13 +30,13 @@ export function Header({ currentView, onViewChange, onLoginClick }: HeaderProps)
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <ChefHat className="w-6 h-6 text-primary-500" />
-          <span className="font-extrabold text-lg text-slate-900">
+          <span className="font-extrabold text-lg text-slate-900 hidden sm:inline">
             Flash<span className="text-primary-500">Cook</span>
           </span>
         </button>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button
             onClick={() => onViewChange('home')}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -44,6 +47,19 @@ export function Header({ currentView, onViewChange, onLoginClick }: HeaderProps)
           >
             Início
           </button>
+          
+          <button
+            onClick={() => onViewChange('explore')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              currentView === 'explore'
+                ? 'bg-primary-50 text-primary-600'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <Compass className="w-4 h-4" />
+            <span className="hidden sm:inline">Explorar</span>
+          </button>
+          
           <button
             onClick={handleProfileClick}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -53,12 +69,20 @@ export function Header({ currentView, onViewChange, onLoginClick }: HeaderProps)
             }`}
           >
             <UserIcon className="w-4 h-4" />
-            Perfil
+            <span className="hidden sm:inline">Perfil</span>
           </button>
         </div>
 
-        {/* Auth Button */}
+        {/* Auth / Premium Button */}
         <div className="flex items-center gap-3">
+          <button 
+            onClick={onPremiumClick}
+            className="flex items-center justify-center p-2 rounded-full min-w-8 min-h-8 bg-gradient-to-r from-amber-200 to-amber-400 text-amber-900 hover:from-amber-300 hover:to-amber-500 transition-all shadow-sm shadow-amber-200"
+            aria-label="Chef Premium"
+          >
+             <Crown className="w-4 h-4 fill-amber-700/20" />
+          </button>
+
           {isLoading ? (
             <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse" />
           ) : user ? (
@@ -83,11 +107,10 @@ export function Header({ currentView, onViewChange, onLoginClick }: HeaderProps)
           ) : (
             <button
               onClick={onLoginClick}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"
+              className="flex flex-1 items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"
             >
               <LogIn className="w-4 h-4" />
-              <span className="hidden sm:inline">Identifique-se</span>
-              <span className="sm:hidden">Entrar</span>
+              <span className="hidden sm:inline">Entrar</span>
             </button>
           )}
         </div>

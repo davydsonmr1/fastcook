@@ -5,6 +5,7 @@ export interface RecipeResponse {
   prepTime: string;
   difficulty: number;
   steps: string[];
+  imageUrl?: string;
 }
 
 export class ApiError extends Error {

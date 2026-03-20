@@ -5,6 +5,8 @@ import { generateRecipe } from '../services/groq.service.js';
 import { optionalAuth } from '../middlewares/auth.middleware.js';
 import { saveRecipeToHistory, getUserPantry } from '../services/supabase.service.js';
 import { redisClient } from '../config/redis.js';
+import { supabaseAdmin } from '../config/supabase.js';
+import { generateRecipeImage } from '../services/image.service.js';
 
 // Função para normalizar ingredientes para Hash Cache (Lowercase e Ordem Alfabética)
 const normalizeIngredientsKey = (input: string) => {
@@ -68,26 +70,35 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
          app.log.warn(redisError, 'Falha ao conectar com o Redis, servindo a request via Groq.');
       }
 
-      // Rate limit manual no Redis para degradação graciosa (5 requests/hora)
-      const ip = request.ip || 'unknown_ip';
-      const userRtKey = `graceful_limit:${ip}`;
-      let isRateLimited = false;
-      try {
-         const currentReqs = await redisClient.incr(userRtKey);
-         if (currentReqs === 1) {
-            await redisClient.expire(userRtKey, 3600); // 1 hora TTL
-         }
-         isRateLimited = currentReqs > 5;
-      } catch (e) {
-         app.log.warn(e, 'Falha no contador manual do Redis, avançando sem limitador.');
+      // Extrair tipo de plano
+      let planType = 'free';
+      if (request.userId) {
+        const { data } = await supabaseAdmin.from('profiles').select('plan_type').eq('id', request.userId).single();
+        if (data?.plan_type) planType = data.plan_type;
       }
 
-      if (isRateLimited) {
-         app.log.warn({ 
-           type: 'GRACEFUL_DEGRADATION',
-           msg: 'Rate limit excedido. Aplicando degradação graciosa para o fallback model.',
-           limit: 5
-         });
+      // Rate limit manual no Redis para degradação graciosa (5 requests/hora)
+      let isRateLimited = false;
+      if (planType !== 'premium') {
+        const ip = request.ip || 'unknown_ip';
+        const userRtKey = `graceful_limit:${ip}`;
+        try {
+           const currentReqs = await redisClient.incr(userRtKey);
+           if (currentReqs === 1) {
+              await redisClient.expire(userRtKey, 3600); // 1 hora TTL
+           }
+           isRateLimited = currentReqs > 5;
+        } catch (e) {
+           app.log.warn(e, 'Falha no contador manual do Redis, avançando sem limitador.');
+        }
+
+        if (isRateLimited) {
+           app.log.warn({ 
+             type: 'GRACEFUL_DEGRADATION',
+             msg: 'Rate limit excedido. Aplicando degradação graciosa para o fallback model.',
+             limit: 5
+           });
+        }
       }
 
       // Adicionar despensa inteligente
@@ -95,7 +106,7 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
 
       // 2. Chama a IA protegida pelo Prompt Shield (agora retorna Stream)
       const startTime = performance.now();
-      const stream = await generateRecipe(ingredients, isRateLimited, userPantry, dietary_restrictions);
+      const stream = await generateRecipe(ingredients, planType, userPantry, dietary_restrictions);
 
       // 3. Configurar SSE via PassThrough (garante que headers CORS são enviados pelo Fastify)
       sseStream = new PassThrough();
@@ -140,9 +151,21 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
            return;
         }
         
+        let imageUrl = null;
+        if (planType === 'premium' && parsedFinalObj.name) {
+           app.log.info({ msg: 'Gerando imagem Premium...' });
+           imageUrl = await generateRecipeImage(parsedFinalObj.name as string);
+           
+           if (imageUrl) {
+             sseStream.write(`data: ${JSON.stringify({ imageUrl })}\n\n`);
+             parsedFinalObj.imageUrl = imageUrl; 
+             fullResponseMarkup = JSON.stringify(parsedFinalObj);
+           }
+        }
+        
         // 6. Persistir no histórico se o utilizador estiver autenticado
         if (request.userId) {
-          void saveRecipeToHistory(request.userId, ingredients, parsedFinalObj);
+          void saveRecipeToHistory(request.userId, ingredients, parsedFinalObj, imageUrl);
         }
         
         // 7. Guardar Cache no Redis com TTL de 24 horas (86400 segundos)

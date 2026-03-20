@@ -1,4 +1,4 @@
-import { Clock, ChefHat, Flame, X, Share2, Heart } from 'lucide-react';
+import { Clock, ChefHat, Flame, X, Share2, Heart, ThumbsUp, Globe2 } from 'lucide-react';
 import type { RecipeResponse } from '../services/api';
 
 interface RecipeCardProps {
@@ -8,6 +8,11 @@ interface RecipeCardProps {
   isStreaming?: boolean;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  isLiked?: boolean;
+  likesCount?: number;
+  onToggleLike?: () => void;
+  isPublic?: boolean;
+  onTogglePublic?: () => void;
 }
 
 // Utilitário para extrair campos de um JSON incompleto de forma resiliente
@@ -19,6 +24,7 @@ function parsePartialJson(jsonString: string): Partial<RecipeResponse> {
     const nameMatch = jsonString.match(/"name"\s*:\s*"([^"]+)/);
     const prepMatch = jsonString.match(/"prepTime"\s*:\s*"([^"]+)/);
     const diffMatch = jsonString.match(/"difficulty"\s*:\s*(\d+)/);
+    const imgMatch = jsonString.match(/"imageUrl"\s*:\s*"([^"]+)/);
     
     const steps: string[] = [];
     const stepsBlockMatch = jsonString.match(/"steps"\s*:\s*\[(.*)/s);
@@ -33,6 +39,7 @@ function parsePartialJson(jsonString: string): Partial<RecipeResponse> {
       prepTime: prepMatch ? prepMatch[1] : '...',
       difficulty: diffMatch ? parseInt(diffMatch[1], 10) : 3,
       steps: steps.length > 0 ? steps : [],
+      imageUrl: imgMatch ? imgMatch[1] : undefined,
     };
   }
 }
@@ -72,6 +79,7 @@ function shareOnWhatsApp(recipe: RecipeResponse) {
     ``,
     `*Modo de Preparação:*`,
     stepsText,
+    recipe.imageUrl ? `\n📸 ${recipe.imageUrl}` : '',
     ``,
     `_Gerado por FlashCook — receitas por voz com IA_ 🚀`,
   ].join('\n');
@@ -83,7 +91,7 @@ function shareOnWhatsApp(recipe: RecipeResponse) {
   );
 }
 
-export function RecipeCard({ recipe, partialText, onClear, isStreaming, isFavorite, onToggleFavorite }: RecipeCardProps) {
+export function RecipeCard({ recipe, partialText, onClear, isStreaming, isFavorite, onToggleFavorite, isLiked, likesCount, onToggleLike, isPublic, onTogglePublic }: RecipeCardProps) {
   const displayRecipe = recipe || parsePartialJson(partialText || '');
   const difficulty = difficultyConfig[displayRecipe.difficulty || 3] ?? difficultyConfig[3];
 
@@ -122,15 +130,29 @@ export function RecipeCard({ recipe, partialText, onClear, isStreaming, isFavori
         </div>
       </div>
 
+      {/* Imagem Premium */}
+      {displayRecipe.imageUrl && (
+        <div className="w-full h-48 sm:h-64 flex items-center justify-center overflow-hidden relative bg-slate-100">
+           {isStreaming ? (
+              <div className="animate-pulse flex items-center text-slate-400"><ChefHat className="animate-bounce" /></div>
+           ) : (
+             <img 
+               src={displayRecipe.imageUrl} 
+               alt={displayRecipe.name} 
+               className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+               loading="lazy"
+             />
+           )}
+        </div>
+      )}
+
       {/* Badges */}
       <div className="flex flex-wrap gap-3 px-6 pt-5 pb-2">
-        {/* Tempo de Preparo */}
         <span className="inline-flex items-center gap-1.5 text-sm font-medium bg-sky-100 text-sky-700 ring-1 ring-sky-300 rounded-full px-3 py-1">
           <Clock className="w-3.5 h-3.5" />
           {displayRecipe.prepTime || '...'}
         </span>
 
-        {/* Dificuldade */}
         <span className={`inline-flex items-center gap-1.5 text-sm font-medium ring-1 rounded-full px-3 py-1 ${difficulty.color}`}>
           <DifficultyStars level={displayRecipe.difficulty || 3} />
           {difficulty.label}
@@ -159,19 +181,38 @@ export function RecipeCard({ recipe, partialText, onClear, isStreaming, isFavori
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-100 px-6 py-4 flex gap-3">
-        {/* Partilhar no WhatsApp */}
+      <div className="border-t border-slate-100 px-6 py-4 flex flex-wrap gap-3 items-center">
+        
+        {onToggleLike && (
+          <button
+            onClick={onToggleLike}
+            className={`flex items-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-colors ${isLiked ? 'text-primary-600 bg-primary-50' : 'text-slate-500 bg-slate-50 hover:bg-slate-100'}`}
+          >
+            <ThumbsUp className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+            {likesCount || 0}
+          </button>
+        )}
+        
+        {onTogglePublic && (
+          <button
+            onClick={onTogglePublic}
+            className={`flex items-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-colors ${isPublic ? 'text-sky-600 bg-sky-50 outline outline-1 outline-sky-200' : 'text-slate-500 bg-slate-50 hover:bg-slate-100'}`}
+          >
+            <Globe2 className="w-4 h-4" />
+            <span className="hidden sm:inline">{isPublic ? 'Pública' : 'Privada'}</span>
+          </button>
+        )}
+
         <button
           onClick={() => displayRecipe.steps && displayRecipe.steps.length > 0 ? shareOnWhatsApp(displayRecipe as RecipeResponse) : null}
           disabled={isStreaming}
           aria-label="Partilhar receita no WhatsApp"
-          className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${onClear ? 'flex-1' : 'w-full'} ${isStreaming ? 'text-slate-400 bg-slate-50 cursor-not-allowed' : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'}`}
+          className={`flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-semibold transition-colors ${!onClear && !onToggleLike ? 'w-full py-2.5' : 'flex-1'} ${isStreaming ? 'text-slate-400 bg-slate-50 cursor-not-allowed' : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'}`}
         >
           <Share2 className="w-4 h-4" aria-hidden="true" />
           Partilhar
         </button>
 
-        {/* Nova Receita (apenas no ecrã principal) */}
         {onClear && (
           <button
             onClick={onClear}
@@ -179,7 +220,7 @@ export function RecipeCard({ recipe, partialText, onClear, isStreaming, isFavori
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 transition-colors shadow-md hover:shadow-lg hover:-translate-y-0.5"
           >
             <ChefHat className="w-4 h-4" aria-hidden="true" />
-            Nova Receita
+            Nova
           </button>
         )}
       </div>

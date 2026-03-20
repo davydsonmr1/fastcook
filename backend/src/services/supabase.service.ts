@@ -22,6 +22,7 @@ export async function saveRecipeToHistory(
   userId: string,
   queryText: string,
   recipeData: unknown,
+  imageUrl?: string | null
 ): Promise<void> {
   const normalized = queryText.toLowerCase().trim();
   const queryHash = createHash('sha256').update(normalized).digest('hex');
@@ -33,6 +34,7 @@ export async function saveRecipeToHistory(
       query_text: queryText,
       response_data: recipeData,
       user_id: userId,
+      image_url: imageUrl,
     });
 
   if (error) {

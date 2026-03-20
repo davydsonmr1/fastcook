@@ -23,6 +23,13 @@ const envSchema = z.object({
 
   // Redis
   REDIS_URL: z.string().optional(),
+
+  // Monetization & SaaS
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  
+  // Imagens
+  FAL_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

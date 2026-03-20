@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════
--- FlashCook — Migração 003: Despensa Inteligente e Favoritos
+-- FastCook — Migração 003: Despensa Inteligente e Favoritos
 --
 -- 1. Adiciona "is_favorite" na tabela recipes_cache.
 -- 2. Cria tabela "user_pantry" para guardar os ingredientes base.

@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════
--- FlashCook — Schema Inicial do Supabase
+-- FastCook — Schema Inicial do Supabase
 -- Migração: 001_initial_schema.sql
 --
 -- Segurança: RLS ativo em todas as tabelas desde o dia zero.

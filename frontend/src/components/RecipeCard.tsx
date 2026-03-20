@@ -71,7 +71,7 @@ function shareOnWhatsApp(recipe: RecipeResponse) {
   const stepsText = recipe.steps.map((s, i) => `${String(i + 1)}. ${s}`).join('\n');
 
   const text = [
-    `🍳 *Receita FlashCook*`,
+    `🍳 *Receita FastCook*`,
     ``,
     `📌 *${recipe.name}*`,
     `⏱ Tempo: ${recipe.prepTime}`,
@@ -81,7 +81,7 @@ function shareOnWhatsApp(recipe: RecipeResponse) {
     stepsText,
     recipe.imageUrl ? `\n📸 ${recipe.imageUrl}` : '',
     ``,
-    `_Gerado por FlashCook — receitas por voz com IA_ 🚀`,
+    `_Gerado por FastCook — receitas por voz com IA_ 🚀`,
   ].join('\n');
 
   window.open(

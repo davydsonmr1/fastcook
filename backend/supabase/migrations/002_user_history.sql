@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════
--- FlashCook — Migração 002: Histórico de Receitas por Utilizador
+-- FastCook — Migração 002: Histórico de Receitas por Utilizador
 --
 -- Adiciona a coluna user_id à tabela recipes_cache para associar
 -- receitas geradas a utilizadores autenticados (Google OAuth).

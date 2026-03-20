@@ -25,6 +25,7 @@ export const recipeBodySchema = z.object({
     .regex(safeStringRegex, {
       message: 'Input inválido. Por favor, forneça ingredientes usando apenas letras e números. Evite símbolos especiais.',
     }),
+  dietary_restrictions: z.string().optional(),
 });
 
 export type RecipeBody = z.infer<typeof recipeBodySchema>;

@@ -3,7 +3,7 @@ import { PassThrough } from 'node:stream';
 import { recipeBodySchema } from '../schemas/recipe.schema.js';
 import { generateRecipe } from '../services/groq.service.js';
 import { optionalAuth } from '../middlewares/auth.middleware.js';
-import { saveRecipeToHistory } from '../services/supabase.service.js';
+import { saveRecipeToHistory, getUserPantry } from '../services/supabase.service.js';
 import { redisClient } from '../config/redis.js';
 
 // Função para normalizar ingredientes para Hash Cache (Lowercase e Ordem Alfabética)
@@ -42,7 +42,7 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
         });
       }
 
-      const { ingredients } = bodyValidation.data;
+      const { ingredients, dietary_restrictions } = bodyValidation.data;
 
       // 2. Cache Distribuído (Bypass completo do Rate Limit via Redis)
       const cacheKey = `recipe:${normalizeIngredientsKey(ingredients)}`;
@@ -90,9 +90,12 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
          });
       }
 
+      // Adicionar despensa inteligente
+      const userPantry = request.userId ? await getUserPantry(request.userId) : [];
+
       // 2. Chama a IA protegida pelo Prompt Shield (agora retorna Stream)
       const startTime = performance.now();
-      const stream = await generateRecipe(ingredients, isRateLimited);
+      const stream = await generateRecipe(ingredients, isRateLimited, userPantry, dietary_restrictions);
 
       // 3. Configurar SSE via PassThrough (garante que headers CORS são enviados pelo Fastify)
       sseStream = new PassThrough();

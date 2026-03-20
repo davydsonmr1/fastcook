@@ -40,6 +40,7 @@ export async function generateRecipe(
   ingredients: string,
   onChunk?: (text: string) => void,
   onStatus?: (msg: string) => void,
+  dietaryRestrictions?: string
 ): Promise<RecipeResponse> {
   const apiUrl = typeof import.meta.env.VITE_API_URL === 'string' && import.meta.env.VITE_API_URL !== ''
       ? import.meta.env.VITE_API_URL
@@ -68,7 +69,7 @@ export async function generateRecipe(
       const response = await fetch(`${apiUrl}/api/v1/recipes`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ ingredients }),
+        body: JSON.stringify({ ingredients, dietary_restrictions: dietaryRestrictions }),
       });
 
       if (!response.ok) {

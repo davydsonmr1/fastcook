@@ -102,7 +102,7 @@ async function start() {
       : (env.PORT > 0 ? env.PORT : 3000);
 
     await app.listen({ port, host: '0.0.0.0' });
-    app.log.info(`🚀 FlashCook API running on 0.0.0.0:${port}`);
+    app.log.info(`🚀 FastCook API running on 0.0.0.0:${port}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

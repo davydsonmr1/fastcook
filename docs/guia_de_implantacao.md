@@ -5,7 +5,7 @@ Este guia cobre a passagem do `docker-compose.yml` local para uma infraestrutura
 ## Pré-requisitos
 - Uma Instância Virtual Linux (ex: Ubuntu 24.04 na AWS EC2 ou DigitalOcean Droplet).
 - Docker e Docker-Compose instalados.
-- Um Domínio apontado para o IP da Instância (ex: `app.flashcook.com`).
+- Um Domínio apontado para o IP da Instância (ex: `app.fastcook.com`).
 
 ## 1. Preparação no Domínio e Servidor
 Aceda via SSH à sua máquina servidora Linux e clone o repositório do FastCook:

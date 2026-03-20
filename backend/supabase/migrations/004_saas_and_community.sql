@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════
--- FlashCook — Migração 004: SaaS e Comunidade
+-- FastCook — Migração 004: SaaS e Comunidade
 --
 -- 1. Monetização (Stripe): Campos de assinatura na tabela profiles.
 -- 2. Conteúdo Visual: URL de imagem no histórico.

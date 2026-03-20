@@ -106,7 +106,7 @@ export function Profile() {
               A Minha Despensa
             </h2>
             <p className="text-sm text-slate-500 mb-6">
-              Adicione ingredientes que tem sempre em casa (ex: sal, azeite, alho). O FlashCook usará esta lista automaticamente nas suas receitas.
+              Adicione ingredientes que tem sempre em casa (ex: sal, azeite, alho). O FastCook usará esta lista automaticamente nas suas receitas.
             </p>
 
             <div className="flex gap-2 mb-6">

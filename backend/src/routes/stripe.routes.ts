@@ -36,23 +36,23 @@ export const stripeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
       }
 
       const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['pix', 'card'],
+        mode: 'payment', // PIX exige pagamento único
         customer: customerId,
-        payment_method_types: ['card'],
         line_items: [
           {
             price_data: {
               currency: 'brl',
               product_data: {
-                name: 'Chef Premium - FastCook',
+                name: 'Chef Premium - Vitalício (Pagamento Único)',
                 description: 'Acesso Pessoal ao Llama 70B, Geração de Imagem Rápida e Despensa Limitless.',
               },
               unit_amount: 100, // 1.00 BRL
-              recurring: { interval: 'month' },
+              // recurring foi removido para PIX
             },
             quantity: 1,
           },
         ],
-        mode: 'subscription',
         success_url: `${env.CORS_ORIGIN.split(',')[0]}/profile?success=true`,
         cancel_url: `${env.CORS_ORIGIN.split(',')[0]}/profile?canceled=true`,
         metadata: { userId },

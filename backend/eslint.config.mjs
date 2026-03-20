@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 import security from 'eslint-plugin-security';
 
 /**
- * ESLint Flat Config — FlashCook Backend
+ * ESLint Flat Config — FastCook Backend
  * Focado em segurança: detecta padrões perigosos que podem levar a
  * vulnerabilidades como injeção, eval, regex DoS, etc.
  */

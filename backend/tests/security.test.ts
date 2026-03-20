@@ -43,7 +43,7 @@ const { buildServer } = await import('../src/server.js');
 const groqService = await import('../src/services/groq.service.js');
 const { redisClient } = await import('../src/config/redis.js');
 
-describe('FlashCook API Security and DevSecOps Tests', () => {
+describe('FastCook API Security and DevSecOps Tests', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {

@@ -6,13 +6,17 @@ import type { RecipeResponse } from './services/api';
 import { RecipeCard } from './components/RecipeCard';
 import { Header } from './components/Header';
 import { Profile } from './pages/Profile';
+import { Explore } from './pages/Explore';
 import { useAuth } from './contexts/AuthContext';
 import { LoginModal } from './components/LoginModal';
+import { PremiumModal } from './components/PremiumModal';
+import type { ViewType } from './components/Header';
 
 function App() {
   const { user } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'profile'>('home');
+  const [currentView, setCurrentView] = useState<ViewType>('home');
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
+  const [isPremiumModalOpen, setPremiumModalOpen] = useState(false);
   const { isListening, transcript, error: speechError, startListening, stopListening, resetTranscript } = useSpeech(() => setShouldSubmit(true));
   
   const [isLoading, setIsLoading] = useState(false);
@@ -98,6 +102,9 @@ function App() {
       setPartialRecipeText('');
     } catch (err) {
       if (err instanceof ApiError) {
+        if (err.message.includes('Rate limit')) {
+           setPremiumModalOpen(true);
+        }
         setApiErrorMsg(err.message);
       } else {
          setApiErrorMsg('Ocorreu um erro interno na sua conexão.');
@@ -110,17 +117,23 @@ function App() {
   return (
     <>
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
       
       <Header 
         currentView={currentView} 
         onViewChange={setCurrentView} 
         onLoginClick={() => setLoginModalOpen(true)}
+        onPremiumClick={() => setPremiumModalOpen(true)}
       />
 
       {currentView === 'profile' && user ? (
         <main className="min-h-screen w-full flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
           <div className="absolute top-0 w-full h-64 bg-gradient-to-b from-primary-50 to-transparent -z-10" />
           <Profile />
+        </main>
+      ) : currentView === 'explore' ? (
+        <main className="min-h-screen w-full flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-slate-50/50">
+          <Explore />
         </main>
       ) : (
         <main className="min-h-screen w-full flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">

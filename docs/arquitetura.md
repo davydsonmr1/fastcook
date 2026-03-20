@@ -43,7 +43,7 @@ sequenceDiagram
     Backend->>Redis: 🛡️ Incrementa contador Rate Limit
     Backend->>Backend: 🔑 Auth Middleware (Valida JWT via supabaseAdmin.auth.getUser)
     Backend->>Backend: 🛡️ Validação Zod (Bloqueia injeções '<>' '[]' '{}')
-    Backend->>Supabase: 📦 (Se Válido) Query "user_pantry" para buscar despensa inteligente
+    Backend->>Supabase: 📦 (Se Válido) Query "user_pantry", "plan_type" para buscar contexto
     Backend->>Backend: 🛡️ Prompt Shield (Sanitiza e injeta Restrições + Despensa no LLM)
     
     %% Passo 4: Verificação de Cache Distribuído

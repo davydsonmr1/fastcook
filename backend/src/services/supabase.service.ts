@@ -39,3 +39,16 @@ export async function saveRecipeToHistory(
     console.error('Erro ao guardar receita no histórico:', error.message);
   }
 }
+
+export async function getUserPantry(userId: string): Promise<string[]> {
+  const { data, error } = await supabaseAdmin
+    .from('user_pantry')
+    .select('ingredients')
+    .eq('user_id', userId)
+    .single();
+
+  if (error || !data) {
+    return [];
+  }
+  return data.ingredients;
+}

@@ -1,4 +1,4 @@
-import { Clock, ChefHat, Flame, X, Share2 } from 'lucide-react';
+import { Clock, ChefHat, Flame, X, Share2, Heart } from 'lucide-react';
 import type { RecipeResponse } from '../services/api';
 
 interface RecipeCardProps {
@@ -6,6 +6,8 @@ interface RecipeCardProps {
   partialText?: string;
   onClear?: () => void;
   isStreaming?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 // Utilitário para extrair campos de um JSON incompleto de forma resiliente
@@ -81,7 +83,7 @@ function shareOnWhatsApp(recipe: RecipeResponse) {
   );
 }
 
-export function RecipeCard({ recipe, partialText, onClear, isStreaming }: RecipeCardProps) {
+export function RecipeCard({ recipe, partialText, onClear, isStreaming, isFavorite, onToggleFavorite }: RecipeCardProps) {
   const displayRecipe = recipe || parsePartialJson(partialText || '');
   const difficulty = difficultyConfig[displayRecipe.difficulty || 3] ?? difficultyConfig[3];
 
@@ -98,15 +100,26 @@ export function RecipeCard({ recipe, partialText, onClear, isStreaming }: Recipe
             {isStreaming && <span className="ml-1 animate-pulse">|</span>}
           </h2>
         </div>
-        {onClear && (
-          <button
-            onClick={onClear}
-            className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 text-white transition-colors"
-            aria-label="Fechar receita e iniciar nova"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {onToggleFavorite && (
+            <button
+              onClick={onToggleFavorite}
+              className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 text-white transition-colors"
+              aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+            >
+              <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+            </button>
+          )}
+          {onClear && (
+            <button
+              onClick={onClear}
+              className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 text-white transition-colors"
+              aria-label="Fechar receita e iniciar nova"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Badges */}

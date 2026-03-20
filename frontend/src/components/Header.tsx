@@ -31,7 +31,7 @@ export function Header({ currentView, onViewChange, onLoginClick, onPremiumClick
         >
           <ChefHat className="w-6 h-6 text-primary-500" />
           <span className="font-extrabold text-lg text-slate-900 hidden sm:inline">
-            Flash<span className="text-primary-500">Cook</span>
+            Fast<span className="text-primary-500">Cook</span>
           </span>
         </button>
 

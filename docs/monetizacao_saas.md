@@ -8,7 +8,7 @@ A nossa infraestrutura permite escalar de 0 a 1 milhão através de um backend l
 **Passos no Painel do Stripe:**
 1. Crie um Produto chamado **"Chef Premium - FastCook"**.
 2. Defina o Pricing (ex: 4,99 EUR / Mês) — *recorrente*.
-3. Vá à configuração de Webhooks, e insira o URL de produção seguido pelo endpoint `/api/v1/webhooks/stripe`.
+3. Vá à configuração de Webhooks, e insira o URL exato do seu backend em produção: `https://fastcook.onrender.com/api/v1/webhooks/stripe`.
 4. Os eventos a assinar (Listening) são: `checkout.session.completed` e `customer.subscription.deleted`.
 5. Extraia o "Signing secret" e coloque no seu servidor sob a variável `STRIPE_WEBHOOK_SECRET`. O `STRIPE_SECRET_KEY` também deve estar configurado no Backend.
 

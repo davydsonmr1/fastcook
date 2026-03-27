@@ -1,4 +1,4 @@
-import { LogIn, User as UserIcon, ChefHat, Compass, Crown } from 'lucide-react';
+import { LogIn, User as UserIcon, ChefHat, Compass/*, Crown*/ } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export type ViewType = 'home' | 'profile' | 'explore';
@@ -10,7 +10,7 @@ interface HeaderProps {
   onPremiumClick: () => void;
 }
 
-export function Header({ currentView, onViewChange, onLoginClick, onPremiumClick }: HeaderProps) {
+export function Header({ currentView, onViewChange, onLoginClick /*, onPremiumClick*/ }: HeaderProps) {
   const { user, isLoading } = useAuth();
 
   const handleProfileClick = () => {

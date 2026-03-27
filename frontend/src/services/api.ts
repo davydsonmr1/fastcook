@@ -43,9 +43,12 @@ export async function generateRecipe(
   onStatus?: (msg: string) => void,
   dietaryRestrictions?: string
 ): Promise<RecipeResponse> {
-  const apiUrl = typeof import.meta.env.VITE_API_URL === 'string' && import.meta.env.VITE_API_URL !== ''
+  const rawApiUrl = typeof import.meta.env.VITE_API_URL === 'string' && import.meta.env.VITE_API_URL !== ''
       ? import.meta.env.VITE_API_URL
       : 'http://localhost:3000';
+
+  // Ouroboros Prevention: Previne concatenação dupla na Vercel/Render (ex: URL/api/v1/api/v1/recipes)
+  const apiUrl = rawApiUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '');
 
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -85,6 +88,13 @@ export async function generateRecipe(
           throw new ApiError(
             response.status,
             'Hum, não percebi ingredientes válidos. Por favor, tente falar os nomes dos alimentos claramente.'
+          );
+        }
+        
+        if (response.status === 404) {
+          throw new ApiError(
+            404,
+            'Serviço não encontrado (404). Por favor, contacte o suporte ou reveja a infraestrutura.'
           );
         }
 

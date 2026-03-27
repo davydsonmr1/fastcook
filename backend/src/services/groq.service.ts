@@ -22,7 +22,7 @@ A atuar como Chef. Cria uma receita com os ingredientes principais. Recebes uma 
 
 export async function generateRecipe(ingredients: string, planType: string = 'free', userPantry: string[] = [], dietaryRestrictions?: string) {
   try {
-    const model = planType === 'premium' ? 'llama-3.3-70b-versatile' : 'llama3-8b-8192';
+    const model = planType === 'premium' ? 'llama-3.3-70b-versatile' : 'llama-3.1-8b-instant';
 
     const pantryText = userPantry.length > 0 ? ` Podes também utilizar os ingredientes disponíveis na despensa: [${userPantry.join(', ')}].` : '';
     const dietaryText = dietaryRestrictions ? ` Cumpre estritamente estas restrições alimentares: [${dietaryRestrictions}].` : '';

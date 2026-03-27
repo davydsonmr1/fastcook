@@ -1,4 +1,4 @@
-import { LogIn, User as UserIcon, ChefHat, Compass, Crown } from 'lucide-react';
+import { LogIn, User as UserIcon, ChefHat, Compass/*, Crown*/ } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export type ViewType = 'home' | 'profile' | 'explore';
@@ -10,7 +10,7 @@ interface HeaderProps {
   onPremiumClick: () => void;
 }
 
-export function Header({ currentView, onViewChange, onLoginClick, onPremiumClick }: HeaderProps) {
+export function Header({ currentView, onViewChange, onLoginClick /*, onPremiumClick*/ }: HeaderProps) {
   const { user, isLoading } = useAuth();
 
   const handleProfileClick = () => {
@@ -75,13 +75,13 @@ export function Header({ currentView, onViewChange, onLoginClick, onPremiumClick
 
         {/* Auth / Premium Button */}
         <div className="flex items-center gap-3">
-          <button 
+          {/* <button 
             onClick={onPremiumClick}
             className="flex items-center justify-center p-2 rounded-full min-w-8 min-h-8 bg-gradient-to-r from-amber-200 to-amber-400 text-amber-900 hover:from-amber-300 hover:to-amber-500 transition-all shadow-sm shadow-amber-200"
             aria-label="Chef Premium"
           >
              <Crown className="w-4 h-4 fill-amber-700/20" />
-          </button>
+          </button> */}
 
           {isLoading ? (
             <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse" />

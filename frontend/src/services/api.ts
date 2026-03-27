@@ -100,6 +100,7 @@ export async function generateRecipe(
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let fullText = '';
+      let imageUrl: string | undefined;
 
       while (true) {
         const { value, done } = await reader.read();
@@ -118,9 +119,23 @@ export async function generateRecipe(
               if (parsed.error) {
                 throw new ApiError(422, parsed.message || parsed.error);
               }
+              
               if (parsed.chunk) {
                 fullText += parsed.chunk;
-                if (onChunk) onChunk(fullText);
+              }
+              if (parsed.imageUrl) {
+                imageUrl = parsed.imageUrl;
+              }
+
+              if (onChunk && (parsed.chunk || parsed.imageUrl)) {
+                 // Injetar pseudo-propriedade na string JSON incompleta/completa para a SkeletonUI detetar imediatamente
+                 let textToYield = fullText;
+                 if (imageUrl && fullText.trim().endsWith('}')) {
+                    textToYield = `${fullText.trim().slice(0, -1)},"imageUrl":"${imageUrl}"}`;
+                 } else if (imageUrl) {
+                    textToYield = `${fullText},"imageUrl":"${imageUrl}"}`;
+                 }
+                 onChunk(textToYield);
               }
             } catch (e) {
               if (e instanceof ApiError) throw e;
@@ -130,7 +145,11 @@ export async function generateRecipe(
       }
 
       try {
-        return JSON.parse(fullText) as RecipeResponse;
+        const parsedResponse = JSON.parse(fullText) as RecipeResponse;
+        if (imageUrl) {
+          parsedResponse.imageUrl = imageUrl;
+        }
+        return parsedResponse;
       } catch {
         throw new ApiError(500, 'Erro ao processar a receita gerada.');
       }

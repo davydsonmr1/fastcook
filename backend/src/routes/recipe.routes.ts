@@ -19,7 +19,6 @@ const normalizeIngredientsKey = (input: string) => {
     .join('_');
 };
 
-// eslint-disable-next-line @typescript-eslint/require-await
 export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
   app.decorateRequest('userId', undefined);
 
@@ -106,7 +105,9 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
 
       // 2. Chama a IA protegida pelo Prompt Shield (agora retorna Stream)
       const startTime = performance.now();
+      app.log.info(`[DEBUG] A iniciar chamada à Cloud da IA Groq (LLM) para ingredientes: ${ingredients}`);
       const stream = await generateRecipe(ingredients, planType, userPantry, dietary_restrictions);
+      app.log.info(`[DEBUG] Groq Stream estabelecido com sucesso em ${Math.round(performance.now() - startTime)}ms. A iniciar Server-Sent Events.`);
 
       // 3. Configurar SSE via PassThrough (garante que headers CORS são enviados pelo Fastify)
       sseStream = new PassThrough();
@@ -120,6 +121,7 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
       let clientDisconnected = false;
       request.raw.on('close', () => {
         clientDisconnected = true;
+        app.log.info('[DEBUG] Cliente Web desconectou-se prematuramente do SSE.');
       });
 
       let fullResponseMarkup = '';
@@ -135,6 +137,8 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
           sseStream.write(`data: ${JSON.stringify({ chunk: content })}\n\n`);
         }
       }
+      
+      app.log.info(`[DEBUG] Streaming de texto LLM concluído. Iniciar pós-processamento.`);
 
       // 5. Avaliação anti-injection post-processamento (Se Shield reagiu devolvendo error obj)
       try {
@@ -153,24 +157,30 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
         
         let imageUrl = null;
         if (planType === 'premium' && parsedFinalObj.name) {
-           app.log.info({ msg: 'Gerando imagem Premium...' });
+           app.log.info('[DEBUG] A iniciar chamada à Fal.ai (Geração de Imagem Premium)...');
+           const imgStartTime = performance.now();
            imageUrl = await generateRecipeImage(parsedFinalObj.name as string);
            
            if (imageUrl) {
+             app.log.info(`[DEBUG] Fal.ai respondeu com sucesso com Imagem em ${Math.round(performance.now() - imgStartTime)}ms.`);
              sseStream.write(`data: ${JSON.stringify({ imageUrl })}\n\n`);
              parsedFinalObj.imageUrl = imageUrl; 
              fullResponseMarkup = JSON.stringify(parsedFinalObj);
+           } else {
+             app.log.warn(`[DEBUG] Fal.ai não conseguiu gerar ou excedeu o Tempo Limite (${Math.round(performance.now() - imgStartTime)}ms). A prosseguir Graceful Degradation (Receita sem Imagem).`);
            }
         }
         
         // 6. Persistir no histórico se o utilizador estiver autenticado
         if (request.userId) {
+          app.log.info(`[DEBUG] A gravar receita final no Supabase Histórico (User: ${request.userId}).`);
           void saveRecipeToHistory(request.userId, ingredients, parsedFinalObj, imageUrl);
         }
         
         // 7. Guardar Cache no Redis com TTL de 24 horas (86400 segundos)
         try {
           await redisClient.setex(cacheKey, 86400, fullResponseMarkup);
+          app.log.info(`[DEBUG] Cache do Redis atualizado corretamente.`);
         } catch (setCacheError) {
           app.log.warn(setCacheError, 'Erro ao criar chave no Redis Cache');
         }
@@ -184,7 +194,7 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
         type: 'TELEMETRY_AI_GENERATION',
         durationMs: Math.round(endTime - startTime),
         isFallbackModel: isRateLimited,
-        msg: 'Geração de receita concluída via stream.',
+        msg: 'Geração de receita totalmente concluída e finalizada.',
       });
 
       // 8. Encerra o Stream de forma amigável
@@ -194,7 +204,7 @@ export const recipeRoutes: FastifyPluginAsync = async (app: FastifyInstance) => 
       return;
 
     } catch (error) {
-      app.log.error(error);
+      app.log.error(error, '[DEBUG] Capturado Erro Fatal na Rota (possivel API Key missing ou timeout precoce).');
       
       if (sseStream && !sseStream.destroyed) {
           sseStream.write(`data: ${JSON.stringify({ error: 'Internal Server Error' })}\n\n`);
